@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Programar Cita - {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0">Programar Cita de Matrícula</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info text-center mb-4">
+                    <p class="mb-0"><strong>{{ name }}</strong> ({{ phone }}), por favor selecciona el horario disponible para tu cita de <strong>{{ course.name }}</strong>.</p>
+                </div>
+
+                <form method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Selecciona la Fecha</label>
+                            <select class="form-select form-select-lg" name="date" required>
+                                {% for d in dates %}
+                                    <option value="{{ d }}">{{ d.strftime('%A, %d de %B de %Y') }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Selecciona la Hora</label>
+                            <select class="form-select form-select-lg" name="time" required>
+                                {% for t in times %}
+                                    <option value="{{ t }}">{{ t }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-success btn-lg fw-bold">Confirmar Cita <i class="bi bi-calendar-check ms-2"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

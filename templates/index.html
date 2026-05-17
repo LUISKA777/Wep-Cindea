@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Inicio - Cindea de Venecia{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold text-primary">Bienvenido a Cindea de Venecia</h1>
+    <p class="lead text-muted">Impulsando tu futuro con educación accesible y de calidad.</p>
+</div>
+
+<div class="row g-4">
+    {% if courses %}
+        {% for course in courses %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title fw-bold mb-0">{{ course.name }}</h5>
+                        <span class="badge bg-info text-dark">Cupos: {{ course.vacancies_left_val }} / {{ course.total_vacancies }}</span>
+                    </div>
+                    <p class="card-text text-muted">{{ course.description }}</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 pb-3">
+                    {% if course.vacancies_left_val > 0 %}
+                        <a href="{{ url_for('enroll', course_id=course.id) }}" class="btn btn-primary w-100 fw-bold">Inscribirse Ahora</a>
+                    {% else %}
+                        <button class="btn btn-secondary w-100 disabled">Sin Cupos Disponibles</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i> Actualmente no hay cursos disponibles. Vuelve pronto.
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
