@@ -291,11 +291,13 @@ def admin_settings():
             'apt_duration': request.form.get('apt_duration', '60') # "60" minutes
         }
 
-        # Get existing settings to see if we patch or post
+        # Get existing settings safely
         current = sb_get('settings', 'select=*')
-        if current and len(current) > 0:
+        if isinstance(current, list) and len(current) > 0:
             sb_patch('settings', 'id', current[0]['id'], settings_data)
         else:
+            # If it's a new table or empty, we post.
+            # Note: If table doesn't exist, this will still fail via API, but not crash the server
             sb_post('settings', settings_data)
 
         flash('Configuración actualizada exitosamente.', 'success')
