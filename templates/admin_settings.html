@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Configuración de Horarios - Cindea{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header py-3 text-center">
+                <h4 class="mb-0">Configuración de Horarios y Atención</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Días Laborales (0=Dom, 1=Lun, etc.)</label>
+                            <input type="text" class="form-control" name="work_days" value="{{ settings.work_days }}" placeholder="Ej: 1,2,3,4,5">
+                            <div class="form-text">Ingresa los números de los días separados por comas.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hora de Inicio</label>
+                            <input type="time" class="form-control" name="start_time" value="{{ settings.start_time }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hora de Fin</label>
+                            <input type="time" class="form-control" name="end_time" value="{{ settings.end_time }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Inicio Almuerzo</label>
+                            <input type="time" class="form-control" name="lunch_start" value="{{ settings.lunch_start }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fin Almuerzo</label>
+                            <input type="time" class="form-control" name="lunch_end" value="{{ settings.lunch_end }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Duración de la Cita (minutos)</label>
+                            <input type="number" class="form-control" name="apt_duration" value="{{ settings.apt_duration }}" required>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Guardar Configuración <i class="bi bi-save ms-2"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -17,15 +17,17 @@
                     <div class="row g-4">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Selecciona la Fecha</label>
-                            <select class="form-select form-select-lg" name="date" required>
+                            <select class="form-select form-select-lg" name="date" id="dateSelect" required>
+                                <option value="" selected disabled>Elija una fecha...</option>
                                 {% for d in dates %}
-                                    <option value="{{ d }}">{{ d.strftime('%A, %d de %B de %Y') }}</option>
+                                    <option value="{{ d.value }}">{{ d.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Selecciona la Hora</label>
-                            <select class="form-select form-select-lg" name="time" required>
+                            <select class="form-select form-select-lg" name="time" id="timeSelect" required>
+                                <option value="" selected disabled>Primero elija la fecha...</option>
                                 {% for t in times %}
                                     <option value="{{ t }}">{{ t }}</option>
                                 {% endfor %}
@@ -41,4 +43,42 @@
         </div>
     </div>
 </div>
+
+<script>
+    const takenSlots = {{ taken | tojson }};
+    const dateSelect = document.getElementById('dateSelect');
+    const timeSelect = document.getElementById('timeSelect');
+
+    function updateTimes() {
+        const selectedDate = dateSelect.value;
+        const allOptions = Array.from(timeSelect.options);
+
+        // Reset all times to enabled
+        allOptions.forEach(opt => {
+            if(opt.value) opt.disabled = false;
+        });
+
+        if (!selectedDate) return;
+
+        // Disable taken slots for the selected date
+        takenSlots.forEach(([date, time]) => {
+            if (date === selectedDate) {
+                const timeOpt = allOptions.find(opt => opt.value === time);
+                if (timeOpt) timeOpt.disabled = true;
+            }
+        });
+
+        // Handle if current selected time became disabled
+        if (timeSelect.value && !Array.from(timeSelect.selectedOptions)[0].disabled) {
+            // keep it
+        } else if (timeSelect.value && Array.from(timeSelect.selectedOptions)[0].disabled) {
+            timeSelect.value = "";
+        }
+    }
+
+    dateSelect.addEventListener('change', updateTimes);
+
+    // Initial run
+    updateTimes();
+</script>
 {% endblock %}

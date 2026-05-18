@@ -17,6 +17,24 @@ HEADERS = {
     'Prefer': 'return=representation'
 }
 
+def format_date_spanish(date_str):
+    if not date_str:
+        return ""
+    # date_str is usually 'YYYY-MM-DD'
+    from datetime import datetime
+    try:
+        dt = datetime.strptime(date_str, '%Y-%m-%d')
+        days = [
+            "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"
+        ]
+        months = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ]
+        return f"{days[dt.weekday()]}, {dt.day} de {months[dt.month-1]} de {dt.year}"
+    except Exception:
+        return date_str
+
 def sb_get(table, params=''):
     url = f"{SUPABASE_URL}/rest/v1/{table}?{params}"
     r = http.get(url, headers=HEADERS)
@@ -97,16 +115,76 @@ def schedule_appointment(course_id, name, phone):
         return "Curso no encontrado", 404
     course = data[0]
 
+    # Get administrative settings
+    settings = sb_get('settings', 'select=*')
+    s = settings[0] if (isinstance(settings, list) and len(settings) > 0) else {
+        'work_days': '0,1,2,3,4',
+        'start_time': '08:00',
+        'end_time': '16:00',
+        'lunch_start': '12:00',
+        'lunch_end': '13:00',
+        'apt_duration': '60'
+    }
+
     today = date.today()
-    available_dates = [today + timedelta(days=i) for i in range(7)]
-    available_times = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+
+    # Filter dates based on working days
+    work_days = [int(d) for d in s['work_days'].split(',')]
+    available_dates = []
+    for i in range(14): # Look ahead 14 days to find enough working days
+        d = today + timedelta(days=i)
+        if d.weekday() in work_days:
+            available_dates.append(d)
+        if len(available_dates) >= 7: # Limit to 7 available working days
+            break
+
+    # Generate time slots based on start, end, duration and lunch break
+    available_times = []
+    start_h, start_m = map(int, s['start_time'].split(':'))
+    end_h, end_m = map(int, s['end_time'].split(':'))
+    lunch_start_h, lunch_start_m = map(int, s['lunch_start'].split(':'))
+    lunch_end_h, lunch_end_m = map(int, s['lunch_end'].split(':'))
+    duration = int(s['apt_duration'])
+
+    current_total_min = start_h * 60 + start_m
+    end_total_min = end_h * 60 + end_m
+    lunch_start_total = lunch_start_h * 60 + lunch_start_m
+    lunch_end_total = lunch_end_h * 60 + lunch_end_m
+
+    while current_total_min + duration <= end_total_min:
+        # Check if slot overlaps with lunch break
+        slot_end = current_total_min + duration
+        if not (slot_end <= lunch_start_total or current_total_min >= lunch_end_total):
+            # Overlaps with lunch
+            current_total_min = lunch_end_total
+            continue
+
+        h, m = divmod(current_total_min, 60)
+        available_times.append(f"{h:02d}:{m:02d}")
+        current_total_min += duration
+
+    # --- Logic to filter occupied slots ---
+    occupied_slots = sb_get('appointments', f'course_id=eq.{course_id}&select=appointment_date,appointment_time')
+    taken = []
+    if isinstance(occupied_slots, list):
+        for slot in occupied_slots:
+            date_val = slot['appointment_date'].split('T')[0] if 'T' in slot['appointment_date'] else slot['appointment_date']
+            taken.append([date_val, slot['appointment_time']])
+
+    # Format dates for template
+    formatted_dates = []
+    for d in available_dates:
+        formatted_dates.append({
+            'value': d.isoformat(),
+            'label': format_date_spanish(d.isoformat())
+        })
 
     if request.method == 'POST':
         apt_date = request.form.get('date')
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
-            return render_template('appointment.html', course=course, name=name, phone=phone, dates=available_dates, times=available_times)
+            return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=taken)
 
         apt_data = sb_post('appointments', {
             'student_name': name,
@@ -124,9 +202,7 @@ def schedule_appointment(course_id, name, phone):
             return redirect(url_for('appointment_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
 
-
-
-    return render_template('appointment.html', course=course, name=name, phone=phone, dates=available_dates, times=available_times)
+    return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=taken)
 
 @app.route('/appointment/receipt/<int:apt_id>')
 def appointment_receipt(apt_id):
@@ -139,12 +215,11 @@ def appointment_receipt(apt_id):
 
     # Format dates for the receipt
     if 'appointment_date' in apt_details:
-        apt_details['appointment_date'] = apt_details['appointment_date'].split('T')[0].replace('-', '/')
+        apt_details['appointment_date'] = format_date_spanish(apt_details['appointment_date'].split('T')[0])
 
     return render_template('receipt.html', appointment=apt_details)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
-
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -179,10 +254,9 @@ def admin_dashboard():
         a['course_name'] = a.get('courses', {}).get('name', 'Unknown') if a.get('courses') else 'Unknown'
         # Format dates for display
         if 'appointment_date' in a:
-            a['appointment_date'] = a['appointment_date'].split('T')[0].replace('-', '/')
+            a['appointment_date'] = format_date_spanish(a['appointment_date'].split('T')[0])
         if 'created_at' in a:
             a['created_at'] = a['created_at'].split('T')[0] + ' ' + a['created_at'].split('T')[1][:5] if 'T' in a['created_at'] else a['created_at']
-
 
     return render_template('admin_dash.html', courses=courses, appointments=appointments)
 
@@ -203,6 +277,40 @@ def add_course():
     else:
         flash('Por favor complete todos los campos.', 'warning')
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+def admin_settings():
+    if request.method == 'POST':
+        settings_data = {
+            'work_days': request.form.get('work_days'), # e.g. "1,2,3,4,5" (Mon-Fri)
+            'start_time': request.form.get('start_time'), # "08:00"
+            'end_time': request.form.get('end_time'), # "16:00"
+            'lunch_start': request.form.get('lunch_start'), # "12:00"
+            'lunch_end': request.form.get('lunch_end'), # "13:00"
+            'apt_duration': request.form.get('apt_duration', '60') # "60" minutes
+        }
+
+        # Get existing settings to see if we patch or post
+        current = sb_get('settings', 'select=*')
+        if current and len(current) > 0:
+            sb_patch('settings', 'id', current[0]['id'], settings_data)
+        else:
+            sb_post('settings', settings_data)
+
+        flash('Configuración actualizada exitosamente.', 'success')
+        return redirect(url_for('admin_settings'))
+
+    settings = sb_get('settings', 'select=*')
+    s = settings[0] if (isinstance(settings, list) and len(settings) > 0) else {
+        'work_days': '0,1,2,3,4',
+        'start_time': '08:00',
+        'end_time': '16:00',
+        'lunch_start': '12:00',
+        'lunch_end': '13:00',
+        'apt_duration': '60'
+    }
+    return render_template('admin_settings.html', settings=s)
 
 @app.route('/admin/course/delete/<int:id>')
 @login_required
