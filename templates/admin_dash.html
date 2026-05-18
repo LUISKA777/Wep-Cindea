@@ -11,7 +11,7 @@
     <!-- Gestor de Cursos -->
     <div class="col-lg-4">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white fw-bold py-3 border-bottom">
+            <div class="card-header fw-bold py-3 border-bottom">
                 <i class="bi bi-plus-circle me-2 text-primary"></i>Agregar Nuevo Curso
             </div>
             <div class="card-body p-4">
@@ -39,13 +39,13 @@
     <!-- Lista de Cursos y Cupos -->
     <div class="col-lg-8">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white fw-bold py-3 border-bottom">
+            <div class="card-header fw-bold py-3 border-bottom">
                 <i class="bi bi-list-ul me-2 text-primary"></i>Cursos Disponibles
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead class="border-bottom">
                             <tr>
                                 <th class="ps-4">Curso</th>
                                 <th class="text-center">Cupos</th>
@@ -82,13 +82,13 @@
 <div class="row mt-5">
     <div class="col-12">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white fw-bold py-3 border-bottom">
+            <div class="card-header fw-bold py-3 border-bottom">
                 <i class="bi bi-calendar-event me-2 text-primary"></i>Citas de Matrícula Programadas
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-striped align-middle mb-0">
-                        <thead class="table-light">
+                        <thead class="border-bottom">
                             <tr>
                                 <th class="ps-4">Estudiante</th>
                                 <th>Teléfono</th>
@@ -102,13 +102,13 @@
                             <tr>
                                 <td class="ps-4 fw-bold">{{ apt.student_name }}</td>
                                 <td>{{ apt.student_phone }}</td>
-                                <td><span class="badge bg-light text-dark border">{{ apt.course_name }}</span></td>
+                                <td><span class="badge bg-primary text-dark border">{{ apt.course_name }}</span></td>
                                 <td class="text-center">
-                                    <div class="fw-bold">{{ apt.appointment_date.strftime('%d/%m/%Y') }}</div>
+                                    <div class="fw-bold">{{ apt.appointment_date }}</div>
                                     <div class="small text-muted">{{ apt.appointment_time }}</div>
                                 </td>
                                 <td class="text-end pe-4 text-muted small">
-                                    {{ apt.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    {{ apt.created_at }}
                                 </td>
                             </tr>
                             {% endfor %}

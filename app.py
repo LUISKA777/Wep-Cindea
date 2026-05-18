@@ -108,7 +108,7 @@ def schedule_appointment(course_id, name, phone):
             flash('Por favor seleccione una fecha y hora.', 'warning')
             return render_template('appointment.html', course=course, name=name, phone=phone, dates=available_dates, times=available_times)
 
-        sb_post('appointments', {
+        apt_data = sb_post('appointments', {
             'student_name': name,
             'student_phone': phone,
             'course_id': course_id,
@@ -118,11 +118,33 @@ def schedule_appointment(course_id, name, phone):
         sb_patch('courses', 'id', course_id, {'filled_vacancies': course['filled_vacancies'] + 1})
 
         flash('¡Cita de matrícula programada con éxito!', 'success')
+
+        apt_id = apt_data.get('id') if isinstance(apt_data, dict) else (apt_data[0].get('id') if isinstance(apt_data, list) and apt_data else None)
+        if apt_id:
+            return redirect(url_for('appointment_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
+
+
 
     return render_template('appointment.html', course=course, name=name, phone=phone, dates=available_dates, times=available_times)
 
+@app.route('/appointment/receipt/<int:apt_id>')
+def appointment_receipt(apt_id):
+    apt = sb_get('appointments', f'id=eq.{apt_id}&select=*,courses(name)')
+    if not apt or len(apt) == 0:
+        return "Cita no encontrada", 404
+
+    apt_details = apt[0]
+    apt_details['course_name'] = apt_details.get('courses', {}).get('name', 'Unknown') if apt_details.get('courses') else 'Unknown'
+
+    # Format dates for the receipt
+    if 'appointment_date' in apt_details:
+        apt_details['appointment_date'] = apt_details['appointment_date'].split('T')[0].replace('-', '/')
+
+    return render_template('receipt.html', appointment=apt_details)
+
 @app.route('/admin/login', methods=['GET', 'POST'])
+
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -155,6 +177,12 @@ def admin_dashboard():
         appointments = []
     for a in appointments:
         a['course_name'] = a.get('courses', {}).get('name', 'Unknown') if a.get('courses') else 'Unknown'
+        # Format dates for display
+        if 'appointment_date' in a:
+            a['appointment_date'] = a['appointment_date'].split('T')[0].replace('-', '/')
+        if 'created_at' in a:
+            a['created_at'] = a['created_at'].split('T')[0] + ' ' + a['created_at'].split('T')[1][:5] if 'T' in a['created_at'] else a['created_at']
+
 
     return render_template('admin_dash.html', courses=courses, appointments=appointments)
 
