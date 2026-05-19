@@ -52,8 +52,12 @@ def sb_patch(table, match_col, match_val, data):
 
 def sb_delete(table, match_col, match_val):
     url = f"{SUPABASE_URL}/rest/v1/{table}?{match_col}=eq.{match_val}"
-    r = http.delete(url, headers=HEADERS)
+    # Custom headers for delete to avoid potential 'return=representation' issues
+    delete_headers = HEADERS.copy()
+    delete_headers['Prefer'] = 'return=minimal'
+    r = http.delete(url, headers=delete_headers)
     return r
+
 
 class User(UserMixin):
     def __init__(self, user_id, username):
@@ -317,9 +321,13 @@ def admin_settings():
 @app.route('/admin/course/delete/<int:id>')
 @login_required
 def delete_course(id):
-    sb_delete('courses', 'id', id)
-    flash('Curso eliminado.', 'success')
+    r = sb_delete('courses', 'id', id)
+    if r.status_code in [200, 204]:
+        flash('Curso eliminado.', 'success')
+    else:
+        flash(f'Error al eliminar el curso: {r.status_code}', 'danger')
     return redirect(url_for('admin_dashboard'))
+
 
 handler = app
 
