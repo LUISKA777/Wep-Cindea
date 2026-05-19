@@ -2,39 +2,56 @@
 {% block title %}Inicio - Cindea de Venecia{% endblock %}
 
 {% block content %}
-<div class="text-center mb-5">
-    <h1 class="display-4 fw-bold text-primary">Bienvenido a Cindea de Venecia</h1>
-    <p class="lead text-muted">Impulsando tu futuro con educación accesible y de calidad.</p>
+<div class="row align-items-center mb-5 py-5">
+    <div class="col-lg-6 text-center text-lg-start">
+        <h1 class="display-3 fw-bold text-primary mb-3">Liderando el <span class="text-white">Futuro Educativo</span></h1>
+        <p class="lead text-muted mb-4">En Cindea de Venecia, impulsamos tu crecimiento con educación accesible, moderna y de calidad. Únete a nuestra comunidad y transforma tu vida profesional.</p>
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+            <a href="#cursos" class="btn btn-primary btn-lg px-4 py-3 fw-bold">Ver Cursos Disponibles</a>
+            <a href="tel:24721135" class="btn btn-outline-primary btn-lg px-4 py-3 fw-bold">Contactar Ahora</a>
+        </div>
+    </div>
+    <div class="col-lg-6 d-none d-lg-block text-center">
+        <img src="{{ url_for('static', filename='logo.jpeg') }}" alt="Cindea Logo" class="img-fluid rounded-4 shadow-lg" style="max-width: 80%; border: 4px solid var(--accent-cyan); transform: rotate(-2deg);">
+    </div>
 </div>
 
-<div class="row g-4">
-    {% if courses %}
-        {% for course in courses %}
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm hover-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title fw-bold mb-0">{{ course.name }}</h5>
-                        <span class="badge bg-primary text-dark">Cupos: {{ course.vacancies_left_val }} / {{ course.total_vacancies }}</span>
+<div id="cursos" class="mb-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-main mb-2">Nuestra Oferta Académica</h2>
+        <div class="mx-auto" style="width: 60px; height: 4px; background: var(--accent-cyan); border-radius: 2px;"></div>
+    </div>
+
+    <div class="row g-4">
+        {% if courses %}
+            {% for course in courses %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title fw-bold mb-0 text-primary">{{ course.name }}</h5>
+                            <span class="badge bg-primary text-dark">Cupos: {{ course.vacancies_left_val }} / {{ course.total_vacancies }}</span>
+                        </div>
+                        <p class="card-text text-muted">{{ course.description }}</p>
                     </div>
-                    <p class="card-text text-muted">{{ course.description }}</p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pb-3">
-                    {% if course.vacancies_left_val > 0 %}
-                        <a href="{{ url_for('enroll', course_id=course.id) }}" class="btn btn-primary w-100 fw-bold">Inscribirse Ahora</a>
-                    {% else %}
-                        <button class="btn btn-secondary w-100 disabled">Sin Cupos Disponibles</button>
-                    {% endif %}
+                    <div class="card-footer bg-transparent border-0 pb-4 px-4">
+                        {% if course.vacancies_left_val > 0 %}
+                            <a href="{{ url_for('enroll', course_id=course.id) }}" class="btn btn-primary w-100 fw-bold py-2">Inscribirse Ahora</a>
+                        {% else %}
+                            <button class="btn btn-secondary w-100 disabled py-2">Sin Cupos Disponibles</button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="col-12 text-center py-5">
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i> Actualmente no hay cursos disponibles. Vuelve pronto.
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="alert alert-info py-4">
+                    <i class="bi bi-info-circle fs-3 mb-3 d-block"></i>
+                    <p class="mb-0 fw-bold">Actualmente no hay cursos disponibles. Vuelve pronto.</p>
+                </div>
             </div>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
