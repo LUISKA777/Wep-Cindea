@@ -324,6 +324,8 @@ def delete_course(id):
     r = sb_delete('courses', 'id', id)
     if r.status_code in [200, 204]:
         flash('Curso eliminado.', 'success')
+    elif r.status_code == 409:
+        flash('No se puede eliminar el curso porque tiene citas programadas o dependencias relacionadas.', 'danger')
     else:
         flash(f'Error al eliminar el curso: {r.status_code}', 'danger')
     return redirect(url_for('admin_dashboard'))

@@ -78,6 +78,11 @@
                                 </td>
                             </tr>
                             {% endfor %}
+                            {% if not courses %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">No hay cursos disponibles en este momento.</td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
