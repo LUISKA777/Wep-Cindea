@@ -411,6 +411,7 @@ def edit_course(id):
 
     return render_template('edit_course.html', course=course)
 
+@app.route('/admin/course/delete/<int:id>')
 @login_required
 def delete_course(id):
     # Primero eliminamos todas las citas asociadas al curso para evitar el error 409 (Conflict)
