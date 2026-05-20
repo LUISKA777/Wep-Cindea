@@ -119,76 +119,112 @@ def schedule_appointment(course_id, name, phone):
         return "Curso no encontrado", 404
     course = data[0]
 
-    # Get administrative settings
-    settings = sb_get('settings', 'select=*')
-    s = settings[0] if (isinstance(settings, list) and len(settings) > 0) else {
-        'work_days': '0,1,2,3,4',
-        'start_time': '08:00',
-        'end_time': '16:00',
-        'lunch_start': '12:00',
-        'lunch_end': '13:00',
-        'apt_duration': '60'
+    # Get course-specific settings with defaults
+    s = {
+        'work_days': course.get('work_days') or '0,1,2,3,4',
+        'start_time': course.get('start_time') or '08:00',
+        'end_time': course.get('end_time') or '16:00',
+        'lunch_start': course.get('lunch_start') or '12:00',
+        'lunch_end': course.get('lunch_end') or '13:00',
+        'apt_duration': course.get('apt_duration') or '60'
     }
 
     today = date.today()
+    vacancies_left = course['total_vacancies'] - course['filled_vacancies']
 
-    # Filter dates based on working days
-    work_days = [int(d) for d in s['work_days'].split(',')]
-    available_dates = []
-    for i in range(14): # Look ahead 14 days to find enough working days
-        d = today + timedelta(days=i)
-        if d.weekday() in work_days:
-            available_dates.append(d)
-        if len(available_dates) >= 7: # Limit to 7 available working days
-            break
+    # Generate all possible slots across next 14 days
+    manual_slots_raw = course.get('manual_slots')
+    all_possible_slots = []
 
-    # Generate time slots based on start, end, duration and lunch break
-    available_times = []
-    start_h, start_m = map(int, s['start_time'].split(':'))
-    end_h, end_m = map(int, s['end_time'].split(':'))
-    lunch_start_h, lunch_start_m = map(int, s['lunch_start'].split(':'))
-    lunch_end_h, lunch_end_m = map(int, s['lunch_end'].split(':'))
-    duration = int(s['apt_duration'])
+    if manual_slots_raw:
+        # Parse manual slots: "YYYY-MM-DD HH:mm\nYYYY-MM-DD HH:mm"
+        lines = manual_slots_raw.strip().split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                # Expecting "YYYY-MM-DD HH:mm"
+                date_part, time_part = line.split(' ')
+                all_possible_slots.append({
+                    'date': date_part,
+                    'time': time_part
+                })
+            except Exception:
+                # Skip malformed lines
+                continue
+    else:
+        work_days = [int(d) for d in s['work_days'].split(',')]
+        start_h, start_m = map(int, s['start_time'].split(':'))
+        end_h, end_m = map(int, s['end_time'].split(':'))
+        lunch_start_h, lunch_start_m = map(int, s['lunch_start'].split(':'))
+        lunch_end_h, lunch_end_m = map(int, s['lunch_end'].split(':'))
+        duration = int(s['apt_duration'])
 
-    current_total_min = start_h * 60 + start_m
-    end_total_min = end_h * 60 + end_m
-    lunch_start_total = lunch_start_h * 60 + lunch_start_m
-    lunch_end_total = lunch_end_h * 60 + lunch_end_m
+        start_total_min = start_h * 60 + start_m
+        end_total_min = end_h * 60 + end_m
+        lunch_start_total = lunch_start_h * 60 + lunch_start_m
+        lunch_end_total = lunch_end_h * 60 + lunch_end_m
 
-    while current_total_min + duration <= end_total_min:
-        # Check if slot overlaps with lunch break
-        slot_end = current_total_min + duration
-        if not (slot_end <= lunch_start_total or current_total_min >= lunch_end_total):
-            # Overlaps with lunch
-            current_total_min = lunch_end_total
-            continue
+        for i in range(14):
+            d = today + timedelta(days=i)
+            if d.weekday() in work_days:
+                current_total_min = start_total_min
+                while current_total_min + duration <= end_total_min:
+                    slot_end = current_total_min + duration
+                    if not (slot_end <= lunch_start_total or current_total_min >= lunch_end_total):
+                        current_total_min = lunch_end_total
+                        continue
 
-        h, m = divmod(current_total_min, 60)
-        available_times.append(f"{h:02d}:{m:02d}")
-        current_total_min += duration
+                    h, m = divmod(current_total_min, 60)
+                    all_possible_slots.append({
+                        'date': d.isoformat(),
+                        'time': f"{h:02d}:{m:02d}"
+                    })
+                    current_total_min += duration
 
-    # --- Logic to filter occupied slots ---
+    # Filter out occupied slots
     occupied_slots = sb_get('appointments', f'course_id=eq.{course_id}&select=appointment_date,appointment_time')
-    taken = []
+    taken_set = set()
     if isinstance(occupied_slots, list):
         for slot in occupied_slots:
-            date_val = slot['appointment_date'].split('T')[0] if 'T' in slot['appointment_date'] else slot['appointment_date']
-            taken.append([date_val, slot['appointment_time']])
+            d_val = slot['appointment_date'].split('T')[0] if 'T' in slot['appointment_date'] else slot['appointment_date']
+            taken_set.add((d_val, slot['appointment_time']))
 
-    # Format dates for template
+    available_slots = [slot for slot in all_possible_slots if (slot['date'], slot['time']) not in taken_set]
+
+    # LIMIT slots to vacancies_left
+    selected_slots = available_slots[:vacancies_left]
+
+    # Prepare data for template
     formatted_dates = []
-    for d in available_dates:
+    available_times = []
+
+    # Unique times and dates from selected slots
+    all_selected_times = sorted(list(set(slot['time'] for slot in selected_slots)))
+    available_times = all_selected_times
+
+    unique_dates = sorted(list(set(slot['date'] for slot in selected_slots)))
+    for d in unique_dates:
         formatted_dates.append({
-            'value': d.isoformat(),
-            'label': format_date_spanish(d.isoformat())
+            'value': d,
+            'label': format_date_spanish(d)
         })
+
+    # Create a 'taken' list for JS that makes any slot NOT in selected_slots appear disabled
+    fake_taken = []
+    for slot in all_possible_slots:
+        if slot not in selected_slots:
+            fake_taken.append([slot['date'], slot['time']])
+    for t in taken_set:
+        fake_taken.append(list(t))
 
     if request.method == 'POST':
         apt_date = request.form.get('date')
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
-            return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=taken)
+            return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
         apt_data = sb_post('appointments', {
             'student_name': name,
@@ -206,7 +242,7 @@ def schedule_appointment(course_id, name, phone):
             return redirect(url_for('appointment_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
 
-    return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=taken)
+    return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
 @app.route('/appointment/receipt/<int:apt_id>')
 def appointment_receipt(apt_id):
@@ -270,12 +306,29 @@ def add_course():
     name = request.form.get('name')
     description = request.form.get('description')
     vacancies = request.form.get('vacancies')
+
+    # Nuevas configuraciones de horario por curso
+    work_days = request.form.get('work_days')
+    start_time = request.form.get('start_time')
+    end_time = request.form.get('end_time')
+    lunch_start = request.form.get('lunch_start')
+    lunch_end = request.form.get('lunch_end')
+    apt_duration = request.form.get('apt_duration')
+    manual_slots = request.form.get('manual_slots')
+
     if name and description and vacancies:
         sb_post('courses', {
             'name': name,
             'description': description,
             'total_vacancies': int(vacancies),
-            'filled_vacancies': 0
+            'filled_vacancies': 0,
+            'work_days': work_days,
+            'start_time': start_time,
+            'end_time': end_time,
+            'lunch_start': lunch_start,
+            'lunch_end': lunch_end,
+            'apt_duration': apt_duration,
+            'manual_slots': manual_slots
         })
         flash('Curso agregado exitosamente.', 'success')
     else:
@@ -318,7 +371,46 @@ def admin_settings():
     }
     return render_template('admin_settings.html', settings=s)
 
-@app.route('/admin/course/delete/<int:id>')
+@app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_course(id):
+    data = sb_get('courses', f'id=eq.{id}&select=*')
+    if not data or len(data) == 0:
+        return "Curso no encontrado", 404
+    course = data[0]
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        vacancies = request.form.get('vacancies')
+        work_days = request.form.get('work_days')
+        start_time = request.form.get('start_time')
+        end_time = request.form.get('end_time')
+        lunch_start = request.form.get('lunch_start')
+        lunch_end = request.form.get('lunch_end')
+        apt_duration = request.form.get('apt_duration')
+        manual_slots = request.form.get('manual_slots')
+
+        if name and description and vacancies:
+            sb_patch('courses', 'id', id, {
+                'name': name,
+                'description': description,
+                'total_vacancies': int(vacancies),
+                'work_days': work_days,
+                'start_time': start_time,
+                'end_time': end_time,
+                'lunch_start': lunch_start,
+                'lunch_end': lunch_end,
+                'apt_duration': apt_duration,
+                'manual_slots': manual_slots
+            })
+            flash('Curso actualizado exitosamente.', 'success')
+        else:
+            flash('Por favor complete todos los campos obligatorios.', 'warning')
+        return redirect(url_for('admin_dashboard'))
+
+    return render_template('edit_course.html', course=course)
+
 @login_required
 def delete_course(id):
     # Primero eliminamos todas las citas asociadas al curso para evitar el error 409 (Conflict)
