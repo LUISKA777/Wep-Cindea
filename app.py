@@ -321,13 +321,26 @@ def admin_settings():
 @app.route('/admin/course/delete/<int:id>')
 @login_required
 def delete_course(id):
+    # Primero eliminamos todas las citas asociadas al curso para evitar el error 409 (Conflict)
+    sb_delete('appointments', 'course_id', id)
+
     r = sb_delete('courses', 'id', id)
     if r.status_code in [200, 204]:
-        flash('Curso eliminado.', 'success')
+        flash('Curso y sus citas relacionadas fueron eliminados.', 'success')
     elif r.status_code == 409:
-        flash('No se puede eliminar el curso porque tiene citas programadas o dependencias relacionadas.', 'danger')
+        flash('No se puede eliminar el curso debido a dependencias en la base de datos.', 'danger')
     else:
         flash(f'Error al eliminar el curso: {r.status_code}', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/appointment/delete/<int:id>')
+@login_required
+def delete_appointment(id):
+    r = sb_delete('appointments', 'id', id)
+    if r.status_code in [200, 204]:
+        flash('Cita procesada y eliminada.', 'success')
+    else:
+        flash(f'Error al procesar la cita: {r.status_code}', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 

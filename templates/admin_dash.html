@@ -121,6 +121,9 @@
                                 </td>
                                 <td class="text-end pe-4 text-muted small">
                                     {{ apt.created_at }}
+                                    <a href="{{ url_for('delete_appointment', id=apt.id) }}" class="btn btn-sm btn-outline-secondary ms-2" onclick="return confirm('¿Marcar esta cita como procesada/eliminada?')">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
