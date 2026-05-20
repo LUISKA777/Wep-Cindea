@@ -43,11 +43,15 @@ def sb_get(table, params=''):
 def sb_post(table, data):
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     r = http.post(url, json=data, headers=HEADERS)
+    if r.status_code >= 400:
+        print(f"Supabase Post Error {r.status_code}: {r.text}")
     return r.json()
 
 def sb_patch(table, match_col, match_val, data):
     url = f"{SUPABASE_URL}/rest/v1/{table}?{match_col}=eq.{match_val}"
     r = http.patch(url, json=data, headers=HEADERS)
+    if r.status_code >= 400:
+        print(f"Supabase Patch Error {r.status_code}: {r.text}")
     return r
 
 def sb_delete(table, match_col, match_val):
@@ -317,7 +321,7 @@ def add_course():
     manual_slots = request.form.get('manual_slots')
 
     if name and description and vacancies:
-        sb_post('courses', {
+        res = sb_post('courses', {
             'name': name,
             'description': description,
             'total_vacancies': int(vacancies),
@@ -330,7 +334,10 @@ def add_course():
             'apt_duration': apt_duration,
             'manual_slots': manual_slots
         })
-        flash('Curso agregado exitosamente.', 'success')
+        if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
+            flash('Curso agregado exitosamente.', 'success')
+        else:
+            flash(f'Error al agregar curso: {res}', 'danger')
     else:
         flash('Por favor complete todos los campos.', 'warning')
     return redirect(url_for('admin_dashboard'))
@@ -392,7 +399,7 @@ def edit_course(id):
         manual_slots = request.form.get('manual_slots')
 
         if name and description and vacancies:
-            sb_patch('courses', 'id', id, {
+            r = sb_patch('courses', 'id', id, {
                 'name': name,
                 'description': description,
                 'total_vacancies': int(vacancies),
@@ -404,7 +411,10 @@ def edit_course(id):
                 'apt_duration': apt_duration,
                 'manual_slots': manual_slots
             })
-            flash('Curso actualizado exitosamente.', 'success')
+            if r.status_code in [200, 204]:
+                flash('Curso actualizado exitosamente.', 'success')
+            else:
+                flash(f'Error al actualizar curso: {r.text}', 'danger')
         else:
             flash('Por favor complete todos los campos obligatorios.', 'warning')
         return redirect(url_for('admin_dashboard'))
