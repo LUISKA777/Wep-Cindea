@@ -2,10 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 import os
 import requests as http
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+import pytz
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cindea-secret-key-12345')
+
+CR_TZ = pytz.timezone('America/Costa_Rica')
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://cdhwvbbbboqkxzichrxt.supabase.co')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkaHd2YmJiYm9xa3h6aWNocnh0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTAzNTAxOSwiZXhwIjoyMDk0NjExMDE5fQ.JBYZbzsbe7cAAxwZ6oUDW-XFUmpt0makEPmx5kNFz2A')
@@ -90,8 +93,18 @@ def index():
     courses = sb_get('courses', 'select=*')
     if not isinstance(courses, list):
         courses = []
+
+    today_str = datetime.now(CR_TZ).date().isoformat()
+
     for c in courses:
         get_vacancies_left(c)
+        # Check if course is closed
+        closing_date = c.get('closing_date')
+        if closing_date and today_str > closing_date:
+            c['is_closed'] = True
+        else:
+            c['is_closed'] = False
+
     return render_template('index.html', courses=courses)
 
 @app.route('/enroll/<int:course_id>', methods=['GET', 'POST'])
@@ -101,6 +114,13 @@ def enroll(course_id):
         return "Curso no encontrado", 404
     course = data[0]
     get_vacancies_left(course)
+
+    # Check if course is closed by date
+    today_str = datetime.now(CR_TZ).date().isoformat()
+    closing_date = course.get('closing_date')
+    if closing_date and today_str > closing_date:
+        flash('Lo sentimos, el periodo de inscripción para este curso ha finalizado.', 'danger')
+        return redirect(url_for('index'))
 
     if course['vacancies_left'] <= 0:
         flash('Lo sentimos, este curso ya no tiene cupos disponibles.', 'danger')
@@ -133,14 +153,16 @@ def schedule_appointment(course_id, name, phone):
         'apt_duration': course.get('apt_duration') or '60'
     }
 
-    today = date.today()
+    now_cr = datetime.now(CR_TZ)
+    today = now_cr.date()
+    current_time_str = now_cr.strftime('%H:%M')
     vacancies_left = course['total_vacancies'] - course['filled_vacancies']
 
     # Generate all possible slots across next 14 days
     manual_slots_raw = course.get('manual_slots')
     all_possible_slots = []
 
-    if manual_slots_raw:
+    if manual_slots_raw and manual_slots_raw.strip():
         # Parse manual slots: "YYYY-MM-DD HH:mm\nYYYY-MM-DD HH:mm"
         lines = manual_slots_raw.strip().split('\n')
         for line in lines:
@@ -149,13 +171,23 @@ def schedule_appointment(course_id, name, phone):
                 continue
             try:
                 # Expecting "YYYY-MM-DD HH:mm"
-                date_part, time_part = line.split(' ')
+                parts = line.split(' ')
+                if len(parts) < 2:
+                    continue
+                date_part, time_part = parts[0], parts[1]
+
+                # Prevent past manual slots
+                if date_part == today.isoformat() and time_part <= current_time_str:
+                    continue
+                if date_part < today.isoformat():
+                    continue
+
                 all_possible_slots.append({
                     'date': date_part,
                     'time': time_part
                 })
-            except Exception:
-                # Skip malformed lines
+            except Exception as e:
+                print(f"Error parsing manual slot line '{line}': {e}")
                 continue
     else:
         work_days = [int(d) for d in s['work_days'].split(',')]
@@ -181,9 +213,16 @@ def schedule_appointment(course_id, name, phone):
                         continue
 
                     h, m = divmod(current_total_min, 60)
+                    time_str = f"{h:02d}:{m:02d}"
+
+                    # Prevent past slots for today
+                    if d == today and time_str <= current_time_str:
+                        current_total_min += duration
+                        continue
+
                     all_possible_slots.append({
                         'date': d.isoformat(),
-                        'time': f"{h:02d}:{m:02d}"
+                        'time': time_str
                     })
                     current_total_min += duration
 
@@ -319,6 +358,7 @@ def add_course():
     lunch_end = request.form.get('lunch_end')
     apt_duration = request.form.get('apt_duration')
     manual_slots = request.form.get('manual_slots')
+    closing_date = request.form.get('closing_date')
 
     if name and description and vacancies:
         res = sb_post('courses', {
@@ -332,7 +372,8 @@ def add_course():
             'lunch_start': lunch_start,
             'lunch_end': lunch_end,
             'apt_duration': apt_duration,
-            'manual_slots': manual_slots
+            'manual_slots': manual_slots,
+            'closing_date': closing_date
         })
         if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
             flash('Curso agregado exitosamente.', 'success')
