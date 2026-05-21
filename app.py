@@ -162,6 +162,19 @@ def schedule_appointment(course_id, name, phone):
     manual_slots_raw = course.get('manual_slots')
     all_possible_slots = []
 
+    # Determine start date for slot generation
+    opening_date_str = course.get('opening_date')
+    if opening_date_str:
+        try:
+            start_date = datetime.strptime(opening_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = today
+    else:
+        start_date = today
+
+    # Start from the later of today or the opening date
+    effective_start_date = max(today, start_date)
+
     if manual_slots_raw and manual_slots_raw.strip():
         # Parse manual slots: "YYYY-MM-DD HH:mm\nYYYY-MM-DD HH:mm"
         lines = manual_slots_raw.strip().split('\n')
@@ -176,9 +189,9 @@ def schedule_appointment(course_id, name, phone):
                     continue
                 date_part, time_part = parts[0], parts[1]
 
-                # Prevent past manual slots
+                # Prevent past manual slots and slots before opening date
                 slot_datetime = datetime.combine(datetime.strptime(date_part, '%Y-%m-%d').date(), time(int(time_part.split(':')[0]), int(time_part.split(':')[1])), tzinfo=CR_TZ)
-                if slot_datetime <= now_cr:
+                if slot_datetime <= now_cr or datetime.strptime(date_part, '%Y-%m-%d').date() < start_date:
                     continue
 
                 all_possible_slots.append({
@@ -202,7 +215,7 @@ def schedule_appointment(course_id, name, phone):
         lunch_end_total = lunch_end_h * 60 + lunch_end_m
 
         for i in range(14):
-            d = today + timedelta(days=i)
+            d = effective_start_date + timedelta(days=i)
             if d.weekday() in work_days:
                 current_total_min = start_total_min
                 while current_total_min + duration <= end_total_min:
@@ -372,7 +385,9 @@ def add_course():
             'lunch_start': lunch_start,
             'lunch_end': lunch_end,
             'apt_duration': apt_duration,
-            'manual_slots': manual_slots
+            'manual_slots': manual_slots,
+            'opening_date': request.form.get('opening_date'),
+            'closing_date': closing_date
         })
         if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
             flash('Curso agregado exitosamente.', 'success')
