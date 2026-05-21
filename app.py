@@ -372,8 +372,7 @@ def add_course():
             'lunch_start': lunch_start,
             'lunch_end': lunch_end,
             'apt_duration': apt_duration,
-            'manual_slots': manual_slots,
-            'closing_date': closing_date
+            'manual_slots': manual_slots
         })
         if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
             flash('Curso agregado exitosamente.', 'success')
