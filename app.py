@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 import os
 import requests as http
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, time
 import pytz
 
 app = Flask(__name__)
@@ -28,7 +28,7 @@ def format_date_spanish(date_str):
     try:
         dt = datetime.strptime(date_str, '%Y-%m-%d')
         days = [
-            "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"
+            "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
         ]
         months = [
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -177,9 +177,8 @@ def schedule_appointment(course_id, name, phone):
                 date_part, time_part = parts[0], parts[1]
 
                 # Prevent past manual slots
-                if date_part == today.isoformat() and time_part <= current_time_str:
-                    continue
-                if date_part < today.isoformat():
+                slot_datetime = datetime.combine(datetime.strptime(date_part, '%Y-%m-%d').date(), time(int(time_part.split(':')[0]), int(time_part.split(':')[1])), tzinfo=CR_TZ)
+                if slot_datetime <= now_cr:
                     continue
 
                 all_possible_slots.append({
@@ -215,8 +214,9 @@ def schedule_appointment(course_id, name, phone):
                     h, m = divmod(current_total_min, 60)
                     time_str = f"{h:02d}:{m:02d}"
 
-                    # Prevent past slots for today
-                    if d == today and time_str <= current_time_str:
+                    # Prevent past slots for today using datetime objects for precision
+                    slot_datetime = datetime.combine(d, time(h, m), tzinfo=CR_TZ)
+                    if slot_datetime <= now_cr:
                         current_total_min += duration
                         continue
 
