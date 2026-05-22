@@ -32,6 +32,14 @@
                             <label class="form-label fw-bold">Fin Almuerzo</label>
                             <input type="time" class="form-control" name="lunch_end" value="{{ settings.lunch_end }}">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Inicio Global</label>
+                            <input type="date" class="form-control" name="global_opening_date" value="{{ settings.global_opening_date }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Fin Global</label>
+                            <input type="date" class="form-control" name="global_closing_date" value="{{ settings.global_closing_date }}">
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Duración de la Cita (minutos)</label>
                             <input type="number" class="form-control" name="apt_duration" value="{{ settings.apt_duration }}" required>

@@ -143,14 +143,18 @@ def schedule_appointment(course_id, name, phone):
         return "Curso no encontrado", 404
     course = data[0]
 
+    # Get global settings
+    global_settings_data = sb_get('settings', 'select=*')
+    global_s = global_settings_data[0] if (isinstance(global_settings_data, list) and len(global_settings_data) > 0) else {}
+
     # Get course-specific settings with defaults
     s = {
-        'work_days': course.get('work_days') or '0,1,2,3,4',
-        'start_time': course.get('start_time') or '08:00',
-        'end_time': course.get('end_time') or '16:00',
-        'lunch_start': course.get('lunch_start') or '12:00',
-        'lunch_end': course.get('lunch_end') or '13:00',
-        'apt_duration': course.get('apt_duration') or '60'
+        'work_days': course.get('work_days') or global_s.get('work_days') or '0,1,2,3,4',
+        'start_time': course.get('start_time') or global_s.get('start_time') or '08:00',
+        'end_time': course.get('end_time') or global_s.get('end_time') or '16:00',
+        'lunch_start': course.get('lunch_start') or global_s.get('lunch_start') or '12:00',
+        'lunch_end': course.get('lunch_end') or global_s.get('lunch_end') or '13:00',
+        'apt_duration': course.get('apt_duration') or global_s.get('apt_duration') or '60'
     }
 
     now_cr = datetime.now(CR_TZ)
@@ -158,40 +162,66 @@ def schedule_appointment(course_id, name, phone):
     current_time_str = now_cr.strftime('%H:%M')
     vacancies_left = course['total_vacancies'] - course['filled_vacancies']
 
-    # Generate all possible slots across next 14 days
+    # Determine start date for slot generation
+    opening_date_str = course.get('opening_date')
+    global_opening_date_str = global_s.get('global_opening_date')
+
+    start_date = today
+    if opening_date_str:
+        try:
+            start_date = max(start_date, datetime.strptime(opening_date_str, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+    if global_opening_date_str:
+        try:
+            start_date = max(start_date, datetime.strptime(global_opening_date_str, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+
+    effective_start_date = start_date
+
+    # Determine end date for slot generation
+    closing_date_str = course.get('closing_date')
+    global_closing_date_str = global_s.get('global_closing_date')
+
+    effective_end_date = None
+    if closing_date_str:
+        try:
+            effective_end_date = datetime.strptime(closing_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if global_closing_date_str:
+        try:
+            g_closing = datetime.strptime(global_closing_date_str, '%Y-%m-%d').date()
+            if effective_end_date is None or g_closing < effective_end_date:
+                effective_end_date = g_closing
+        except ValueError:
+            pass
+
+    # Generate all possible slots
     manual_slots_raw = course.get('manual_slots')
     all_possible_slots = []
 
-    # Determine start date for slot generation
-    opening_date_str = course.get('opening_date')
-    if opening_date_str:
-        try:
-            start_date = datetime.strptime(opening_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            start_date = today
-    else:
-        start_date = today
-
-    # Start from the later of today or the opening date
-    effective_start_date = max(today, start_date)
-
     if manual_slots_raw and manual_slots_raw.strip():
-        # Parse manual slots: "YYYY-MM-DD HH:mm\nYYYY-MM-DD HH:mm"
         lines = manual_slots_raw.strip().split('\n')
         for line in lines:
             line = line.strip()
             if not line:
                 continue
             try:
-                # Expecting "YYYY-MM-DD HH:mm"
                 parts = line.split(' ')
                 if len(parts) < 2:
                     continue
                 date_part, time_part = parts[0], parts[1]
 
-                # Prevent past manual slots and slots before opening date
                 slot_datetime = datetime.combine(datetime.strptime(date_part, '%Y-%m-%d').date(), time(int(time_part.split(':')[0]), int(time_part.split(':')[1])), tzinfo=CR_TZ)
-                if slot_datetime <= now_cr or datetime.strptime(date_part, '%Y-%m-%d').date() < start_date:
+
+                # Validate against now and start date
+                if slot_datetime <= now_cr or datetime.strptime(date_part, '%Y-%m-%d').date() < effective_start_date:
+                    continue
+
+                # Validate against end date
+                if effective_end_date and datetime.strptime(date_part, '%Y-%m-%d').date() > effective_end_date:
                     continue
 
                 all_possible_slots.append({
@@ -214,8 +244,13 @@ def schedule_appointment(course_id, name, phone):
         lunch_start_total = lunch_start_h * 60 + lunch_start_m
         lunch_end_total = lunch_end_h * 60 + lunch_end_m
 
-        for i in range(14):
+        for i in range(30): # Increased range to ensure we hit end_date if it's far
             d = effective_start_date + timedelta(days=i)
+
+            # Stop if we've passed the effective end date
+            if effective_end_date and d > effective_end_date:
+                break
+
             if d.weekday() in work_days:
                 current_total_min = start_total_min
                 while current_total_min + duration <= end_total_min:
@@ -227,7 +262,6 @@ def schedule_appointment(course_id, name, phone):
                     h, m = divmod(current_total_min, 60)
                     time_str = f"{h:02d}:{m:02d}"
 
-                    # Prevent past slots for today using datetime objects for precision
                     slot_datetime = datetime.combine(d, time(h, m), tzinfo=CR_TZ)
                     if slot_datetime <= now_cr:
                         current_total_min += duration
@@ -256,7 +290,6 @@ def schedule_appointment(course_id, name, phone):
     formatted_dates = []
     available_times = []
 
-    # Unique times and dates from selected slots
     all_selected_times = sorted(list(set(slot['time'] for slot in selected_slots)))
     available_times = all_selected_times
 
@@ -267,7 +300,6 @@ def schedule_appointment(course_id, name, phone):
             'label': format_date_spanish(d)
         })
 
-    # Create a 'taken' list for JS that makes any slot NOT in selected_slots appear disabled
     fake_taken = []
     for slot in all_possible_slots:
         if slot not in selected_slots:
@@ -280,6 +312,33 @@ def schedule_appointment(course_id, name, phone):
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
+            return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+
+        # SERVER-SIDE VALIDATION
+        try:
+            # Convert selected slot to datetime
+            selected_dt = datetime.combine(datetime.strptime(apt_date, '%Y-%m-%d').date(), time(int(apt_time.split(':')[0]), int(apt_time.split(':')[1])), tzinfo=CR_TZ)
+
+            # 1. Prevent past appointments
+            if selected_dt <= now_cr:
+                flash('Lo sentimos, no puede programar una cita en el pasado.', 'danger')
+                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+
+            # 2. Validate against effective start and end dates
+            selected_date_val = selected_dt.date()
+            if selected_date_val < effective_start_date:
+                flash('La fecha seleccionada es anterior a la fecha de apertura.', 'danger')
+                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            if effective_end_date and selected_date_val > effective_end_date:
+                flash('La fecha seleccionada es posterior a la fecha de cierre.', 'danger')
+                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+
+            # 3. Verify the slot was actually offered as available
+            if not any(slot['date'] == apt_date and slot['time'] == apt_time for slot in selected_slots):
+                flash('Lo sentimos, este horario ya no está disponible o no es válido.', 'danger')
+                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+        except Exception as e:
+            flash('Error al validar la fecha y hora seleccionadas.', 'danger')
             return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
         apt_data = sb_post('appointments', {
@@ -407,7 +466,9 @@ def admin_settings():
             'end_time': request.form.get('end_time'), # "16:00"
             'lunch_start': request.form.get('lunch_start'), # "12:00"
             'lunch_end': request.form.get('lunch_end'), # "13:00"
-            'apt_duration': request.form.get('apt_duration', '60') # "60" minutes
+            'apt_duration': request.form.get('apt_duration', '60'), # "60" minutes
+            'global_opening_date': request.form.get('global_opening_date'),
+            'global_closing_date': request.form.get('global_closing_date')
         }
 
         # Get existing settings safely
