@@ -525,7 +525,9 @@ def edit_course(id):
                 'lunch_start': lunch_start,
                 'lunch_end': lunch_end,
                 'apt_duration': apt_duration,
-                'manual_slots': manual_slots
+                'manual_slots': manual_slots,
+                'opening_date': request.form.get('opening_date'),
+                'closing_date': request.form.get('closing_date')
             })
             if r.status_code in [200, 204]:
                 flash('Curso actualizado exitosamente.', 'success')
