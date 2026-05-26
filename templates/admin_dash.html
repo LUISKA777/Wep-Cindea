@@ -83,6 +83,7 @@
                         <thead class="border-bottom">
                             <tr>
                                 <th class="ps-4">Estudiante</th>
+                                <th>Cédula</th>
                                 <th>Teléfono</th>
                                 <th>Curso</th>
                                 <th class="text-center">Fecha y Hora</th>
@@ -93,6 +94,7 @@
                             {% for apt in appointments %}
                             <tr>
                                 <td class="ps-4 fw-bold">{{ apt.student_name }}</td>
+                                <td>{{ apt.student_cedula }}</td>
                                 <td>{{ apt.student_phone }}</td>
                                 <td><span class="badge bg-primary text-dark border">{{ apt.course_name }}</span></td>
                                 <td class="text-center">

@@ -128,16 +128,17 @@ def enroll(course_id):
 
     if request.method == 'POST':
         name = request.form.get('name')
+        cedula = request.form.get('cedula')
         phone = request.form.get('phone')
-        if not name or not phone:
+        if not name or not cedula or not phone:
             flash('Por favor complete todos los campos.', 'warning')
             return render_template('enroll.html', course=course)
-        return redirect(url_for('schedule_appointment', course_id=course_id, name=name, phone=phone))
+        return redirect(url_for('schedule_appointment', course_id=course_id, name=name, cedula=cedula, phone=phone))
 
     return render_template('enroll.html', course=course)
 
-@app.route('/schedule/<int:course_id>/<name>/<phone>', methods=['GET', 'POST'])
-def schedule_appointment(course_id, name, phone):
+@app.route('/schedule/<int:course_id>/<name>/<cedula>/<phone>', methods=['GET', 'POST'])
+def schedule_appointment(course_id, name, cedula, phone):
     data = sb_get('courses', f'id=eq.{course_id}&select=*')
     if not data or len(data) == 0:
         return "Curso no encontrado", 404
@@ -312,7 +313,7 @@ def schedule_appointment(course_id, name, phone):
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
-            return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
         # SERVER-SIDE VALIDATION
         try:
@@ -322,27 +323,28 @@ def schedule_appointment(course_id, name, phone):
             # 1. Prevent past appointments
             if selected_dt <= now_cr:
                 flash('Lo sentimos, no puede programar una cita en el pasado.', 'danger')
-                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
             # 2. Validate against effective start and end dates
             selected_date_val = selected_dt.date()
             if selected_date_val < effective_start_date:
                 flash('La fecha seleccionada es anterior a la fecha de apertura.', 'danger')
-                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
             if effective_end_date and selected_date_val > effective_end_date:
                 flash('La fecha seleccionada es posterior a la fecha de cierre.', 'danger')
-                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
             # 3. Verify the slot was actually offered as available
             if not any(slot['date'] == apt_date and slot['time'] == apt_time for slot in selected_slots):
                 flash('Lo sentimos, este horario ya no está disponible o no es válido.', 'danger')
-                return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
         except Exception as e:
             flash('Error al validar la fecha y hora seleccionadas.', 'danger')
-            return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
         apt_data = sb_post('appointments', {
             'student_name': name,
+            'student_cedula': cedula,
             'student_phone': phone,
             'course_id': course_id,
             'appointment_date': apt_date,
@@ -357,7 +359,7 @@ def schedule_appointment(course_id, name, phone):
             return redirect(url_for('appointment_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
 
-    return render_template('appointment.html', course=course, name=name, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+    return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
 
 @app.route('/appointment/receipt/<int:apt_id>')
 def appointment_receipt(apt_id):
