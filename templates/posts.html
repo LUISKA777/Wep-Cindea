@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Información - CINDEA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5">Información y Noticias</h1>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for post in posts %}
+        <div class="col">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ post.title }}</h5>
+                    <p class="card-text text-muted">
+                        {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
+                    </p>
+                    <a href="{{ url_for('post_detail', post_id=post.id) }}" class="btn btn-primary">Leer más</a>
+                </div>
+                <div class="card-footer text-muted small">
+                    Publicado el {{ post.created_at[:10] if post.created_at else 'Fecha desconocida' }}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">
+            <p class="text-muted">No hay publicaciones disponibles en este momento.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: transform 0.2s ease-in-out;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+}
+</style>
+{% endblock %}

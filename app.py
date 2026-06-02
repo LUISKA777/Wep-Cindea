@@ -107,6 +107,21 @@ def index():
 
     return render_template('index.html', courses=courses)
 
+@app.route('/posts')
+def posts():
+    all_posts = sb_get('posts', 'select=*,order=created_at.desc')
+    if not isinstance(all_posts, list):
+        all_posts = []
+    return render_template('posts.html', posts=all_posts)
+
+@app.route('/post/<int:post_id>')
+def post_detail(post_id):
+    data = sb_get('posts', f'id=eq.{post_id}&select=*')
+    if not data or len(data) == 0:
+        return "Post no encontrado", 404
+    post = data[0]
+    return render_template('post_detail.html', post=post)
+
 @app.route('/enroll/<int:course_id>', methods=['GET', 'POST'])
 def enroll(course_id):
     data = sb_get('courses', f'id=eq.{course_id}&select=*')
@@ -565,6 +580,106 @@ def delete_appointment(id):
     else:
         flash(f'Error al procesar la cita: {r.status_code}', 'danger')
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/posts')
+@login_required
+def admin_posts():
+    posts = sb_get('posts', 'select=*,order=created_at.desc')
+    if not isinstance(posts, list):
+        posts = []
+    return render_template('admin_posts.html', posts=posts)
+
+@app.route('/admin/posts/add', methods=['GET', 'POST'])
+@login_required
+def add_post():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        if title and content:
+            res = sb_post('posts', {'title': title, 'content': content})
+            if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
+                flash('Post agregado exitosamente.', 'success')
+            else:
+                flash(f'Error al agregar post: {res}', 'danger')
+        else:
+            flash('Por favor complete todos los campos.', 'warning')
+        return redirect(url_for('admin_posts'))
+    return render_template('admin_post_edit.html', post=None)
+
+@app.route('/admin/posts/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_post(id):
+    data = sb_get('posts', f'id=eq.{id}&select=*')
+    if not data or len(data) == 0:
+        return "Post no encontrado", 404
+    post = data[0]
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        if title and content:
+            r = sb_patch('posts', 'id', id, {'title': title, 'content': content})
+            if r.status_code in [200, 204]:
+                flash('Post actualizado exitosamente.', 'success')
+            else:
+                flash(f'Error al actualizar post: {r.text}', 'danger')
+        else:
+            flash('Por favor complete todos los campos obligatorios.', 'warning')
+        return redirect(url_for('admin_posts'))
+    return render_template('admin_post_edit.html', post=post)
+
+@app.route('/admin/posts/delete/<int:id>')
+@login_required
+def delete_post(id):
+    r = sb_delete('posts', 'id', id)
+    if r.status_code in [200, 204]:
+        flash('Post eliminado exitosamente.', 'success')
+    else:
+        flash(f'Error al eliminar post: {r.status_code}', 'danger')
+    return redirect(url_for('admin_posts'))
+
+@app.route('/matriculas')
+def matriculas():
+    data = sb_get('enrollment_dates', 'select=*,order=level.asc')
+    if not isinstance(data, list):
+        data = []
+    return render_template('matriculas.html', dates=data)
+
+@app.route('/admin/matriculas', methods=['GET', 'POST'])
+@login_required
+def admin_matriculas():
+    if request.method == 'POST':
+        id = request.form.get('id')
+        level = request.form.get('level')
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+
+        if id:
+            # Update existing
+            if level and start_date and end_date:
+                r = sb_patch('enrollment_dates', 'id', id, {'level': level, 'start_date': start_date, 'end_date': end_date})
+                if r.status_code in [200, 204]:
+                    flash('Fecha actualizada exitosamente.', 'success')
+                else:
+                    flash(f'Error al actualizar fecha: {r.text}', 'danger')
+            else:
+                flash('Por favor complete todos los campos.', 'warning')
+        else:
+            # Add new
+            if level and start_date and end_date:
+                res = sb_post('enrollment_dates', {'level': level, 'start_date': start_date, 'end_date': end_date})
+                if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
+                    flash('Fecha de matrícula agregada exitosamente.', 'success')
+                else:
+                    flash(f'Error al agregar fecha: {res}', 'danger')
+            else:
+                flash('Por favor complete todos los campos.', 'warning')
+
+        return redirect(url_for('admin_matriculas'))
+
+    data = sb_get('enrollment_dates', 'select=*,order=level.asc')
+    if not isinstance(data, list):
+        data = []
+    return render_template('admin_matriculas.html', dates=data)
 
 
 handler = app

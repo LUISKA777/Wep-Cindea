@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{% if post %}Editar{% else %}Nuevo{% endif %} Post - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">{{ 'Editar Publicación' if post else 'Nueva Publicación' }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Título</label>
+                            <input type="text" name="title" id="title" class="form-control" value="{{ post.title if post else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Contenido</label>
+                            <textarea name="content" id="content" class="form-control" rows="10" required>{{ post.content if post else '' }}</textarea>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_posts') }}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar Publicación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

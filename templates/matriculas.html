@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Fechas de Matrícula - CINDEA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5">Calendario de Matrícula</h1>
+
+    {% set cycles = {
+        'Primaria': ['1ero', '2do', '3ero', '4to', '5to', '6to'],
+        '2do Ciclo': ['7mo', '8vo', '9no'],
+        '3er Ciclo': ['10mo', '11vo', '12vo']
+    } %}
+
+    {% for cycle, levels in cycles.items() %}
+    <div class="mb-5">
+        <h2 class="text-primary border-bottom pb-2 mb-4">{{ cycle }}</h2>
+        <div class="table-responsive bg-white shadow-sm rounded p-3">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nivel</th>
+                        <th>Fecha de Inicio</th>
+                        <th>Fecha de Cierre</th>
+                    </tr>
+                </theads>
+                <tbody>
+                    {% set found = false %}
+                    {% for d in dates %}
+                        {% if any(lvl in d.level for lvl in levels) %}
+                            {% set found = true %}
+                            <tr>
+                                <td><strong>{{ d.level }}</strong></td>
+                                <td>{{ d.start_date }}</td>
+                                <td>{{ d.end_date }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    {% if not found %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No hay fechas programadas para este ciclo.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

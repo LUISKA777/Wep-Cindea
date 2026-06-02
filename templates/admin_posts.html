@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Gestionar Posts - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestionar Publicaciones</h1>
+        <a href="{{ url_for('add_post') }}" class="btn btn-success">Agregar Nuevo Post</a>
+    </div>
+
+    <div class="table-responsive bg-white shadow-sm rounded p-3">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Título</th>
+                    <th>Fecha</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>{{ post.title }}</td>
+                    <td>{{ post.created_at[:10] if post.created_at else '---' }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-sm btn-outline-primary me-2">Editar</a>
+                        <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este post?')">Eliminar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">No hay publicaciones creadas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-4">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Volver al Panel</a>
+    </div>
+</div>
+{% endblock %}

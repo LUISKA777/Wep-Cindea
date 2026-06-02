@@ -8,6 +8,12 @@
         <button type="button" class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddCourse">
             <i class="bi bi-plus-circle me-2"></i>Agregar Nuevo Curso
         </button>
+        <a href="{{ url_for('admin_posts') }}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil-square me-2"></i>Gestionar Posts
+        </a>
+        <a href="{{ url_for('admin_matriculas') }}" class="btn btn-outline-primary">
+            <i class="bi bi-calendar-range me-2"></i>Gestionar Matrículas
+        </a>
         <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-primary">
             <i class="bi bi-gear-fill me-2"></i>Configuración de Horarios
         </a>

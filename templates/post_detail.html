@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} - Información CINDEA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('posts') }}">Información</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
+                </ol>
+            </nav>
+            <article class="bg-white p-4 shadow-sm rounded">
+                <h1 class="mb-3">{{ post.title }}</h1>
+                <div class="text-muted mb-4 small">
+                    Publicado el {{ post.created_at[:10] if post.created_at else 'Fecha desconocida' }}
+                </div>
+                <div class="content" style="white-space: pre-wrap; line-height: 1.6;">
+                    {{ post.content }}
+                </div>
+            </article>
+            <div class="text-center mt-4">
+                <a href="{{ url_for('posts') }}" class="btn btn-outline-secondary">&larr; Volver a la lista</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
