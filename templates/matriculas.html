@@ -24,8 +24,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set found = false %}
+                    {% set ns = namespace(found=false) %}
                     {% for d in dates %}
+                        {# Check if any level keyword matches the current date's level #}
                         {% set match = false %}
                         {% for lvl in levels %}
                             {% if lvl.lower() in d.level.lower() or d.level.lower() in lvl.lower() %}
@@ -34,7 +35,7 @@
                         {% endfor %}
 
                         {% if match %}
-                            {% set found = true %}
+                            {% set ns.found = true %}
                             <tr class="border-bottom">
                                 <td><strong class="text-dark">{{ d.level }}</strong></td>
                                 <td>{{ d.start_date }}</td>
@@ -42,7 +43,8 @@
                             </tr>
                         {% endif %}
                     {% endfor %}
-                    {% if not found %}
+
+                    {% if not ns.found %}
                     <tr class="text-center text-muted">
                         <td colspan="3" class="py-3">No se encontraron fechas para este ciclo.</td>
                     </tr>
@@ -53,11 +55,11 @@
     </div>
     {% endfor %}
 
-    {# SECCIÓN DE DIAGNÓSTICO - Solo se muestra si hay datos pero algunos no coinciden o para ayudar al admin #}
+    {# SECCIÓN DE DIAGNÓSTICO #}
     {% if dates %}
     <div class="alert alert-info mt-5 p-4 shadow-sm">
         <h4 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Verificación de Datos</h4>
-        <p>Si las tablas de arriba están vacías pero ves datos aquí, es que el <strong>nombre del nivel</strong> en Supabase no coincide con los filtros (ej. escribiste "Primero" en vez de "1ero").</p>
+        <p>Si las tablas de arriba están vacías pero ves datos aquí, es que el <strong>nombre del nivel</strong> en Supabase no coincide con los filtros.</p>
         <div class="table-responsive">
             <table class="table table-sm table-bordered bg-white">
                 <thead class="table-light">
@@ -70,7 +72,7 @@
                 </thead>
                 <tbody>
                     {% for d in dates %}
-                    <tr>
+                    <tr class="small">
                         <td>{{ d.id }}</td>
                         <td><code class="text-primary fw-bold">{{ d.level }}</code></td>
                         <td>{{ d.start_date }}</td>
