@@ -113,6 +113,8 @@ def index():
 @app.route('/posts')
 def posts():
     all_posts = sb_get('posts', 'select=*,order=created_at.desc')
+    if all_posts is None:
+        return "Error conectando con Supabase. Por favor, verifique la consola del servidor.", 500
     if not isinstance(all_posts, list):
         all_posts = []
     return render_template('posts.html', posts=all_posts)
@@ -120,6 +122,8 @@ def posts():
 @app.route('/post/<int:post_id>')
 def post_detail(post_id):
     data = sb_get('posts', f'id=eq.{post_id}&select=*')
+    if data is None:
+        return "Error conectando con Supabase", 500
     if not data or len(data) == 0:
         return "Post no encontrado", 404
     post = data[0]
@@ -643,6 +647,8 @@ def delete_post(id):
 @app.route('/matriculas')
 def matriculas():
     data = sb_get('enrollment_dates', 'select=*,order=level.asc')
+    if data is None:
+        return "Error conectando con Supabase. Por favor, verifique la consola del servidor.", 500
     if not isinstance(data, list):
         data = []
     return render_template('matriculas.html', dates=data)
