@@ -28,23 +28,23 @@
                     {% for d in dates %}
                         {% set match = false %}
                         {% for lvl in levels %}
-                            {% if lvl in d.level %}
+                            {% if lvl.lower() in d.level.lower() %}
                                 {% set match = true %}
                             {% endif %}
                         {% endfor %}
 
                         {% if match %}
                             {% set found = true %}
-                            <tr>
-                                <td><strong>{{ d.level }}</strong></td>
+                            <tr class="border-bottom">
+                                <td><strong class="text-dark">{{ d.level }}</strong></td>
                                 <td>{{ d.start_date }}</td>
                                 <td>{{ d.end_date }}</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
                     {% if not found %}
-                    <tr>
-                        <td colspan="3" class="text-center text-muted">No hay fechas programadas para este ciclo.</td>
+                    <tr class="text-center text-muted">
+                        <td colspan="3" class="py-3">No se encontraron fechas para este ciclo.</td>
                     </tr>
                     {% endif %}
                 </tbody>
