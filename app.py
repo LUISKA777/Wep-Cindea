@@ -116,7 +116,7 @@ def index():
 
 @app.route('/posts')
 def posts():
-    res = sb_get('posts', 'select=*,order=created_at.desc')
+    res = sb_get('posts', 'select=*&order=created_at.desc')
     if isinstance(res, dict) and 'error' in res:
         return f"Error de Supabase ({res['error']}): {res['text']}", 500
     if not isinstance(res, list):
@@ -650,7 +650,7 @@ def delete_post(id):
 
 @app.route('/matriculas')
 def matriculas():
-    res = sb_get('enrollment_dates', 'select=*,order=level.asc')
+    res = sb_get('enrollment_dates', 'select=*&order=level.asc')
     if isinstance(res, dict) and 'error' in res:
         return f"Error de Supabase ({res['error']}): {res['text']}", 500
     if not isinstance(res, list):
