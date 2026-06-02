@@ -22,11 +22,18 @@
                         <th>Fecha de Inicio</th>
                         <th>Fecha de Cierre</th>
                     </tr>
-                </theads>
+                </thead>
                 <tbody>
                     {% set found = false %}
                     {% for d in dates %}
-                        {% if any(lvl in d.level for lvl in levels) %}
+                        {% set match = false %}
+                        {% for lvl in levels %}
+                            {% if lvl in d.level %}
+                                {% set match = true %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if match %}
                             {% set found = true %}
                             <tr>
                                 <td><strong>{{ d.level }}</strong></td>
