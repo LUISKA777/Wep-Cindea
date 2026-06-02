@@ -55,6 +55,23 @@
     <div class="text-center mb-5">
         <h2 class="fw-bold text-main mb-2">Nuestra Oferta Académica</h2>
         <div class="mx-auto" style="width: 60px; height: 4px; background: var(--accent-cyan); border-radius: 2px;"></div>
+
+        <div class="mt-4">
+            <p class="small text-muted mb-3">Filtrar por nivel educativo:</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a href="{{ url_for('index') }}"
+                   class="btn btn-sm {{ 'btn-primary' if not selected_level else 'btn-outline-primary' }} rounded-pill px-3">
+                   Todos
+                </a>
+                {% set available_levels = ["Primaria Aprobada", "Secundaria Incompleta", "Secundaria Completa"] %}
+                {% for lvl in available_levels %}
+                <a href="{{ url_for('index', level=lvl) }}"
+                   class="btn btn-sm {{ 'btn-primary' if selected_level == lvl else 'btn-outline-primary' }} rounded-pill px-3">
+                   {{ lvl }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -83,7 +100,7 @@
             <div class="col-12 text-center py-5">
                 <div class="alert alert-info py-4">
                     <i class="bi bi-info-circle fs-3 mb-3 d-block"></i>
-                    <p class="mb-0 fw-bold">Actualmente no hay cursos disponibles. Vuelve pronto.</p>
+                    <p class="mb-0 fw-bold">No hay cursos disponibles para el nivel seleccionado.</p>
                 </div>
             </div>
         {% endif %}

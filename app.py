@@ -97,9 +97,14 @@ def get_vacancies_left(course):
 
 @app.route('/')
 def index():
+    selected_level = request.args.get('level')
     courses = sb_get('courses', 'select=*')
     if not isinstance(courses, list):
         courses = []
+
+    # Filter courses by educational level if a filter is selected
+    if selected_level:
+        courses = [c for c in courses if c.get('required_levels') and selected_level in c['required_levels'].split(',')]
 
     today_str = datetime.now(CR_TZ).date().isoformat()
 
@@ -112,7 +117,7 @@ def index():
         else:
             c['is_closed'] = False
 
-    return render_template('index.html', courses=courses)
+    return render_template('index.html', courses=courses, selected_level=selected_level)
 
 @app.route('/posts')
 def posts():
@@ -460,6 +465,10 @@ def add_course():
     manual_slots = request.form.get('manual_slots')
     closing_date = request.form.get('closing_date')
 
+    # Educational levels
+    required_levels_list = request.form.getlist('required_levels')
+    required_levels_str = ",".join(required_levels_list)
+
     if name and description and vacancies:
         res = sb_post('courses', {
             'name': name,
@@ -474,7 +483,8 @@ def add_course():
             'apt_duration': apt_duration,
             'manual_slots': manual_slots,
             'opening_date': request.form.get('opening_date'),
-            'closing_date': closing_date
+            'closing_date': closing_date,
+            'required_levels': required_levels_str
         })
         if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
             flash('Curso agregado exitosamente.', 'success')
@@ -542,6 +552,10 @@ def edit_course(id):
         apt_duration = request.form.get('apt_duration')
         manual_slots = request.form.get('manual_slots')
 
+        # Educational levels
+        required_levels_list = request.form.getlist('required_levels')
+        required_levels_str = ",".join(required_levels_list)
+
         if name and description and vacancies:
             r = sb_patch('courses', 'id', id, {
                 'name': name,
@@ -555,7 +569,8 @@ def edit_course(id):
                 'apt_duration': apt_duration,
                 'manual_slots': manual_slots,
                 'opening_date': request.form.get('opening_date'),
-                'closing_date': request.form.get('closing_date')
+                'closing_date': request.form.get('closing_date'),
+                'required_levels': required_levels_str
             })
             if r.status_code in [200, 204]:
                 flash('Curso actualizado exitosamente.', 'success')
