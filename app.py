@@ -40,11 +40,15 @@ def format_date_spanish(date_str):
 
 def sb_get(table, params=''):
     url = f"{SUPABASE_URL}/rest/v1/{table}?{params}"
-    r = http.get(url, headers=HEADERS)
-    if r.status_code >= 400:
-        print(f"Supabase Get Error {r.status_code}: {r.text}")
-        return {'error': r.status_code, 'text': r.text}
-    return r.json()
+    try:
+        r = http.get(url, headers=HEADERS)
+        if r.status_code >= 400:
+            print(f"Supabase Get Error {r.status_code}: {r.text}")
+            return {'error': r.status_code, 'text': r.text}
+        return r.json()
+    except Exception as e:
+        print(f"HTTP Request Exception: {e}")
+        return {'error': 'EXCEPTION', 'text': str(e)}
 
 def sb_post(table, data):
     url = f"{SUPABASE_URL}/rest/v1/{table}"
