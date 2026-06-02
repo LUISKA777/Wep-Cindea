@@ -5,13 +5,7 @@
 <div class="container py-5">
     <h1 class="text-center mb-5">Calendario de Matrícula</h1>
 
-    {% set cycles = {
-        'Primaria': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to'],
-        '2do Ciclo': ['2do ciclo', '7mo', '8vo', '9no', '7vo', '8vo', '9no'],
-        '3er Ciclo': ['3er ciclo', '10mo', '11vo', '12vo', '10vo', '11vo', '12vo']
-    } %}
-
-    {% for cycle, keywords in cycles.items() %}
+    {% for cycle, items in grouped_dates.items() %}
     <div class="mb-5">
         <h2 class="text-primary border-bottom pb-2 mb-4">{{ cycle }}</h2>
         <div class="table-responsive bg-white shadow-sm rounded p-3">
@@ -24,37 +18,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set found = false %}
-                    {% for d in dates %}
-                        {% set match = false %}
-                        {% for key in keywords %}
-                            {% if key in d.level.lower() %}
-                                {% set match = true %}
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if match %}
-                            {% set found = true %}
-                            <tr class="border-bottom">
-                                <td><strong class="text-dark">{{ d.level }}</strong></td>
-                                <td>{{ d.start_date }}</td>
-                                <td>{{ d.end_date }}</td>
-                            </tr>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if not found %}
+                    {% for d in items %}
+                    <tr class="border-bottom">
+                        <td><strong class="text-dark">{{ d.level }}</strong></td>
+                        <td>{{ d.start_date }}</td>
+                        <td>{{ d.end_date }}</td>
+                    </tr>
+                    {% else %}
                     <tr class="text-center text-muted">
                         <td colspan="3" class="py-3">No se encontraron fechas para este ciclo.</td>
                     </tr>
-                    {% endif %}
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
     {% endfor %}
 
-    {% if dates %}
+    {% if all_dates %}
     <div class="alert alert-info mt-5 p-4 shadow-sm">
         <h4 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Verificación de Datos</h4>
         <p>Si las tablas de arriba están vacías, es que el nombre en la base de datos no coincide con los filtros.</p>
@@ -69,7 +50,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for d in dates %}
+                    {% for d in all_dates %}
                     <tr class="small">
                         <td>{{ d.id }}</td>
                         <td><code class="text-primary fw-bold">{{ d.level }}</code></td>
@@ -80,7 +61,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </div}
     {% endif %}
 </div>
 {% endblock %}

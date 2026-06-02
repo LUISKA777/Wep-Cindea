@@ -655,9 +655,30 @@ def matriculas():
     res = sb_get('enrollment_dates', 'select=*&order=level.asc')
     if isinstance(res, dict) and 'error' in res:
         return f"Error de Supabase ({res['error']}): {res['text']}", 500
-    if not isinstance(res, list):
-        res = []
-    return render_template('matriculas.html', dates=res)
+
+    dates_list = res if isinstance(res, list) else []
+
+    # Agrupamos los datos en Python para que la plantilla sea simple y no falle
+    grouped_dates = {
+        'Primaria': [],
+        '2do Ciclo': [],
+        '3er Ciclo': []
+    }
+
+    keywords = {
+        'Primaria': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to'],
+        '2do Ciclo': ['2do ciclo', '7mo', '8vo', '9no', '7vo', '8vo', '9no'],
+        '3er Ciclo': ['3er ciclo', '10mo', '11vo', '12vo', '10vo', '11vo', '12vo']
+    }
+
+    for d in dates_list:
+        level_text = str(d.get('level', '')).lower()
+        for cycle, keys in keywords.items():
+            if any(k in level_text for k in keys):
+                grouped_dates[cycle].append(d)
+                break
+
+    return render_template('matriculas.html', grouped_dates=grouped_dates, all_dates=dates_list)
 
 @app.route('/admin/matriculas', methods=['GET', 'POST'])
 @login_required
@@ -691,7 +712,7 @@ def admin_matriculas():
 
         return redirect(url_for('admin_matriculas'))
 
-    data = sb_get('enrollment_dates', 'select=*,order=level.asc')
+    data = sb_get('enrollment_dates', 'select=*&order=level.asc')
     if not isinstance(data, list):
         data = []
     return render_template('admin_matriculas.html', dates=data)
