@@ -645,6 +645,8 @@ def delete_post(id):
     if r.status_code in [200, 204]:
         flash('Post eliminado exitosamente.', 'success')
     else:
+        # Log error for debugging
+        print(f"Delete Post Error {r.status_code}: {r.text}")
         flash(f'Error al eliminar post: {r.status_code}', 'danger')
     return redirect(url_for('admin_posts'))
 

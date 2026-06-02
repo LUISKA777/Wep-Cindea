@@ -6,9 +6,9 @@
     <h1 class="text-center mb-5">Calendario de Matrícula</h1>
 
     {% set cycles = {
-        'Primaria': ['1ero', '2do', '3ero', '4to', '5to', '6to'],
-        '2do Ciclo': ['7mo', '8vo', '9no'],
-        '3er Ciclo': ['10mo', '11vo', '12vo']
+        'Primaria': ['1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to'],
+        '2do Ciclo': ['7mo', '8vo', '9no', '7vo', '8vo', '//9vo'],
+        '3er Ciclo': ['10mo', '11vo', '12vo', '10vo', '11vo', '12vo']
     } %}
 
     {% for cycle, levels in cycles.items() %}
@@ -28,7 +28,7 @@
                     {% for d in dates %}
                         {% set match = false %}
                         {% for lvl in levels %}
-                            {% if lvl.lower() in d.level.lower() %}
+                            {% if lvl.lower() in d.level.lower() or d.level.lower() in lvl.lower() %}
                                 {% set match = true %}
                             {% endif %}
                         {% endfor %}
@@ -52,5 +52,41 @@
         </div>
     </div>
     {% endfor %}
+
+    {# SECCIÓN DE DIAGNÓSTICO #}
+    {% if dates %}
+    <div class="alert alert-info mt-5 p-4 shadow-sm">
+        <h4 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Verificación de Datos</h4>
+        <p>Si las tablas de arriba están vacías pero ves datos aquí, es que el <strong>nombre del nivel</strong> en Supabase no coincide con los filtros (ej. escribiste "Primero" en vez de "1ero").</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered bg-white">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nivel exacto en DB</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in dates %}
+                    <tr>
+                        <td>{{ d.id }}</td>
+                        <td><code>{{ d.level }}</code></td>
+                        <td>{{ d.start_date }}</td>
+                        <td>{{ d.end_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% elif not dates and not dates is none %}
+    <div class="alert alert-warning mt-5 p-4 text-center shadow-sm">
+        <h4 class="fw-bold mb-2">La base de datos está vacía</h4>
+        <p>La conexión con Supabase es exitosa, pero no hay ninguna fecha de matrícula registrada en la tabla <code>enrollment_dates</code>.</p>
+        <a href="{{ url_for('admin_matriculas') }}" class="btn btn-primary">Ir a agregar fechas</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
