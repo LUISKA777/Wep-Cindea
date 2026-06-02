@@ -43,7 +43,7 @@ def sb_get(table, params=''):
     r = http.get(url, headers=HEADERS)
     if r.status_code >= 400:
         print(f"Supabase Get Error {r.status_code}: {r.text}")
-        return None
+        return {'error': r.status_code, 'text': r.text}
     return r.json()
 
 def sb_post(table, data):
@@ -112,21 +112,21 @@ def index():
 
 @app.route('/posts')
 def posts():
-    all_posts = sb_get('posts', 'select=*,order=created_at.desc')
-    if all_posts is None:
-        return "Error conectando con Supabase. Por favor, verifique la consola del servidor.", 500
-    if not isinstance(all_posts, list):
-        all_posts = []
-    return render_template('posts.html', posts=all_posts)
+    res = sb_get('posts', 'select=*,order=created_at.desc')
+    if isinstance(res, dict) and 'error' in res:
+        return f"Error de Supabase ({res['error']}): {res['text']}", 500
+    if not isinstance(res, list):
+        res = []
+    return render_template('posts.html', posts=res)
 
 @app.route('/post/<int:post_id>')
 def post_detail(post_id):
-    data = sb_get('posts', f'id=eq.{post_id}&select=*')
-    if data is None:
-        return "Error conectando con Supabase", 500
-    if not data or len(data) == 0:
+    res = sb_get('posts', f'id=eq.{post_id}&select=*')
+    if isinstance(res, dict) and 'error' in res:
+        return f"Error de Supabase ({res['error']}): {res['text']}", 500
+    if not res or len(res) == 0:
         return "Post no encontrado", 404
-    post = data[0]
+    post = res[0]
     return render_template('post_detail.html', post=post)
 
 @app.route('/enroll/<int:course_id>', methods=['GET', 'POST'])
@@ -646,12 +646,12 @@ def delete_post(id):
 
 @app.route('/matriculas')
 def matriculas():
-    data = sb_get('enrollment_dates', 'select=*,order=level.asc')
-    if data is None:
-        return "Error conectando con Supabase. Por favor, verifique la consola del servidor.", 500
-    if not isinstance(data, list):
-        data = []
-    return render_template('matriculas.html', dates=data)
+    res = sb_get('enrollment_dates', 'select=*,order=level.asc')
+    if isinstance(res, dict) and 'error' in res:
+        return f"Error de Supabase ({res['error']}): {res['text']}", 500
+    if not isinstance(res, list):
+        res = []
+    return render_template('matriculas.html', dates=res)
 
 @app.route('/admin/matriculas', methods=['GET', 'POST'])
 @login_required
