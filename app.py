@@ -535,13 +535,13 @@ def admin_settings():
             'mat_apt_duration': request.form.get('mat_apt_duration', '30'),
             'mat_primaria_opening': request.form.get('mat_primaria_opening') or None,
             'mat_primaria_closing': request.form.get('mat_primaria_closing') or None,
-            'mat_primaria_cupos': request.form.get('mat_primaria_cupos') or None,
+            'mat_primaria_cupos': request.form.get('mat_primaria_cupos') or '',
             'mat_segundo_nivel_opening': request.form.get('mat_segundo_nivel_opening') or None,
             'mat_segundo_nivel_closing': request.form.get('mat_segundo_nivel_closing') or None,
-            'mat_segundo_nivel_cupos': request.form.get('mat_segundo_nivel_cupos') or None,
+            'mat_segundo_nivel_cupos': request.form.get('mat_segundo_nivel_cupos') or '',
             'mat_tercer_nivel_opening': request.form.get('mat_tercer_nivel_opening') or None,
             'mat_tercer_nivel_closing': request.form.get('mat_tercer_nivel_closing') or None,
-            'mat_tercer_nivel_cupos': request.form.get('mat_tercer_nivel_cupos') or None,
+            'mat_tercer_nivel_cupos': request.form.get('mat_tercer_nivel_cupos') or '',
         }
         current = sb_get('settings', 'select=*')
         if isinstance(current, list) and len(current) > 0:
@@ -825,22 +825,65 @@ MATRICULA_CYCLES = {
     }
 }
 
+def _get_cycle_availability(cycle):
+    """Retorna (max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val)"""
+    settings_data = sb_get('settings', 'select=*')
+    gs = settings_data[0] if (isinstance(settings_data, list) and len(settings_data) > 0) else {}
+    cycle_key_map = {
+        'primaria':      ('mat_primaria_opening',      'mat_primaria_closing',      'mat_primaria_cupos'),
+        'segundo_nivel': ('mat_segundo_nivel_opening', 'mat_segundo_nivel_closing', 'mat_segundo_nivel_cupos'),
+        'tercer_nivel':  ('mat_tercer_nivel_opening',  'mat_tercer_nivel_closing',  'mat_tercer_nivel_cupos'),
+    }
+    opening_key, closing_key, cupos_key = cycle_key_map.get(cycle, ('mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos'))
+    opening_val = gs.get(opening_key) or None
+    closing_val = gs.get(closing_key) or None
+    cupos_val = gs.get(cupos_key)
+    max_cupos = int(cupos_val) if cupos_val and str(cupos_val).isdigit() else None
+
+    occupied = sb_get('matricula_appointments', f'cycle=eq.{cycle}&select=appointment_date,appointment_time')
+    booked_count = len(occupied) if isinstance(occupied, list) else 0
+
+    if max_cupos is not None:
+        remaining = max(0, max_cupos - booked_count)
+    else:
+        remaining = None  # sin límite
+
+    matricula_configured = bool(opening_val or closing_val)
+    return max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs
+
+
 @app.route('/matricula/<cycle>', methods=['GET', 'POST'])
 def matricula_enroll(cycle):
     if cycle not in MATRICULA_CYCLES:
         return "Ciclo no válido", 404
     info = MATRICULA_CYCLES[cycle]
 
+    # Verificar disponibilidad ANTES de mostrar el formulario
+    max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs = _get_cycle_availability(cycle)
+
+    # Sin cupos disponibles → mostrar bloqueo, no el formulario
+    no_cupos = (remaining is not None and remaining <= 0)
+    no_config = not matricula_configured
+
     if request.method == 'POST':
+        if no_cupos or no_config:
+            flash('No hay cupos disponibles para este nivel en este momento.', 'danger')
+            return render_template('matricula_enroll.html', cycle=cycle, info=info,
+                                   no_cupos=no_cupos, no_config=no_config,
+                                   remaining=remaining, max_cupos=max_cupos)
         name = request.form.get('name')
         cedula = request.form.get('cedula')
         phone = request.form.get('phone')
         if not name or not cedula or not phone:
             flash('Por favor complete todos los campos.', 'warning')
-            return render_template('matricula_enroll.html', cycle=cycle, info=info)
+            return render_template('matricula_enroll.html', cycle=cycle, info=info,
+                                   no_cupos=no_cupos, no_config=no_config,
+                                   remaining=remaining, max_cupos=max_cupos)
         return redirect(url_for('matricula_schedule', cycle=cycle, name=name, cedula=cedula, phone=phone))
 
-    return render_template('matricula_enroll.html', cycle=cycle, info=info)
+    return render_template('matricula_enroll.html', cycle=cycle, info=info,
+                           no_cupos=no_cupos, no_config=no_config,
+                           remaining=remaining, max_cupos=max_cupos)
 
 
 @app.route('/matricula/<cycle>/cita/<name>/<cedula>/<phone>', methods=['GET', 'POST'])
@@ -850,8 +893,7 @@ def matricula_schedule(cycle, name, cedula, phone):
     info = MATRICULA_CYCLES[cycle]
 
     # Configuración específica de matrícula desde settings
-    settings_data = sb_get('settings', 'select=*')
-    gs = settings_data[0] if (isinstance(settings_data, list) and len(settings_data) > 0) else {}
+    max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs = _get_cycle_availability(cycle)
 
     s = {
         'work_days': gs.get('mat_work_days') or gs.get('work_days') or '0,1,2,3,4',
@@ -865,20 +907,7 @@ def matricula_schedule(cycle, name, cedula, phone):
     now_cr = datetime.now(CR_TZ)
     today = now_cr.date()
 
-    # Fechas de apertura/cierre y cupos según ciclo (campos específicos)
-    cycle_key_map = {
-        'primaria':      ('mat_primaria_opening',      'mat_primaria_closing',      'mat_primaria_cupos'),
-        'segundo_nivel': ('mat_segundo_nivel_opening', 'mat_segundo_nivel_closing', 'mat_segundo_nivel_cupos'),
-        'tercer_nivel':  ('mat_tercer_nivel_opening',  'mat_tercer_nivel_closing',  'mat_tercer_nivel_cupos'),
-    }
-    opening_key, closing_key, cupos_key = cycle_key_map.get(cycle, ('mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos'))
-    opening_val = gs.get(opening_key) or None
-    closing_val = gs.get(closing_key) or None
-    cupos_val = gs.get(cupos_key)
-    max_cupos = int(cupos_val) if cupos_val and str(cupos_val).isdigit() else None
-
-    # Sin fechas configuradas → no hay citas disponibles
-    matricula_configured = bool(opening_val or closing_val)
+    # matricula_configured ya viene de _get_cycle_availability
 
     effective_start_date = today
     effective_end_date = None
@@ -940,10 +969,10 @@ def matricula_schedule(cycle, name, cedula, phone):
 
     available_slots = [s2 for s2 in all_possible_slots if (s2['date'], s2['time']) not in taken_set]
 
-    # Limitar por cupos configurados
+    # Limitar por cupos configurados (usamos taken_set local que es más preciso)
     if max_cupos is not None:
-        booked_count = len(taken_set)
-        remaining_cupos = max(0, max_cupos - booked_count)
+        booked_count_local = len(taken_set)
+        remaining_cupos = max(0, max_cupos - booked_count_local)
         available_slots = available_slots[:remaining_cupos]
 
     unique_dates = sorted(list(set(s2['date'] for s2 in available_slots)))
