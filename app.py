@@ -1020,11 +1020,8 @@ def matricula_schedule(cycle, name, cedula, phone):
 
     available_slots = [s2 for s2 in all_possible_slots if (s2['date'], s2['time']) not in taken_set]
 
-    # Limitar por cupos configurados (usamos taken_set local que es más preciso)
-    if max_cupos is not None:
-        booked_count_local = len(taken_set)
-        remaining_cupos = max(0, max_cupos - booked_count_local)
-        available_slots = available_slots[:remaining_cupos]
+    # Los cupos controlan cuántas reservas totales se permiten (chequeado en matricula_enroll).
+    # Aquí mostramos todos los slots libres dentro del periodo — no cortamos por cupos.
 
     unique_dates = sorted(list(set(s2['date'] for s2 in available_slots)))
     formatted_dates = [{'value': d, 'label': format_date_spanish(d)} for d in unique_dates]
@@ -1110,29 +1107,5 @@ def delete_matricula_cita(id):
 
 
 
-@app.route('/admin/diagnostico')
-@login_required
-def admin_diagnostico():
-    """Muestra el estado real de la tabla settings en Supabase."""
-    result = sb_get('settings', 'select=*')
-    
-    # Intentar un PATCH de prueba con los campos nuevos para detectar columnas faltantes
-    col_tests = {}
-    if isinstance(result, list) and result:
-        sid = result[0]['id']
-        test_fields = [
-            'mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos',
-            'mat_segundo_nivel_opening', 'mat_segundo_nivel_closing', 'mat_segundo_nivel_cupos',
-            'mat_tercer_nivel_opening', 'mat_tercer_nivel_closing', 'mat_tercer_nivel_cupos',
-        ]
-        for field in test_fields:
-            url = f"{SUPABASE_URL}/rest/v1/settings?id=eq.{sid}"
-            r = http.patch(url, json={field: result[0].get(field)}, headers=HEADERS)
-            col_tests[field] = {'ok': r.status_code < 400, 'status': r.status_code, 'msg': r.text[:100] if r.status_code >= 400 else '✅'}
-
-    return render_template('admin_diagnostico.html', settings_raw=result, col_tests=col_tests)
 
 handler = app
-
-if __name__ == '__main__':
-    app.run(debug=True)
