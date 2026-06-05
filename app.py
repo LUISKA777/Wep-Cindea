@@ -730,7 +730,7 @@ def matriculas():
     keywords = {
         'Primaria': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to'],
         '2do Ciclo': ['2do ciclo', '7mo', '8vo', '9no', '7vo', '8vo', '9no'],
-        '3er Ciclo': ['3er ciclo', '10mo', '11vo', , '10vo', '11vo', ]
+        '3er Ciclo': ['3er ciclo', '10mo', '11vo', '10vo']
     }
 
     for d in dates_list:
