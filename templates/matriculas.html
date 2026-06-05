@@ -6,25 +6,41 @@
     <h1 class="text-center mb-2">Calendario de Matrícula</h1>
     <div class="mx-auto mb-5" style="width: 60px; height: 4px; background: var(--accent-cyan); border-radius: 2px;"></div>
 
-    <!-- Botones para sacar cita -->
+    <!-- Botones para sacar cita (3 niveles) -->
     <div class="row g-4 mb-5 justify-content-center">
-        <div class="col-md-5">
+        <!-- Primer Nivel -->
+        <div class="col-md-4">
             <div class="card hover-card h-100 text-center p-4" style="border-color: rgba(255,193,7,0.4) !important;">
                 <i class="bi bi-book fs-1 text-warning mb-3"></i>
-                <h4 class="fw-bold mb-2">Matrícula Primaria</h4>
+                <h4 class="fw-bold mb-1">Primer Nivel</h4>
+                <p class="text-muted small mb-1">(Primaria)</p>
                 <p class="text-muted small mb-4">Para estudiantes de 1° a 6° grado de primaria.</p>
                 <a href="{{ url_for('matricula_enroll', cycle='primaria') }}" class="btn btn-warning fw-bold">
-                    <i class="bi bi-calendar-plus me-2"></i>Sacar Cita — Primaria
+                    <i class="bi bi-calendar-plus me-2"></i>Sacar Cita
                 </a>
             </div>
         </div>
-        <div class="col-md-5">
+        <!-- Segundo Nivel -->
+        <div class="col-md-4">
             <div class="card hover-card h-100 text-center p-4" style="border-color: rgba(6,182,212,0.4) !important;">
                 <i class="bi bi-mortarboard fs-1 text-info mb-3"></i>
-                <h4 class="fw-bold mb-2">Matrícula Secundaria</h4>
-                <p class="text-muted small mb-4">Para estudiantes de 7° a 11° año de secundaria.</p>
-                <a href="{{ url_for('matricula_enroll', cycle='secundaria') }}" class="btn btn-info fw-bold text-dark">
-                    <i class="bi bi-calendar-plus me-2"></i>Sacar Cita — Secundaria
+                <h4 class="fw-bold mb-1">Segundo Nivel</h4>
+                <p class="text-muted small mb-1">(Sétimo, Octavo y Noveno)</p>
+                <p class="text-muted small mb-4">Para estudiantes de 7°, 8° y 9° año.</p>
+                <a href="{{ url_for('matricula_enroll', cycle='segundo_nivel') }}" class="btn btn-info fw-bold text-dark">
+                    <i class="bi bi-calendar-plus me-2"></i>Sacar Cita
+                </a>
+            </div>
+        </div>
+        <!-- Tercer Nivel -->
+        <div class="col-md-4">
+            <div class="card hover-card h-100 text-center p-4" style="border-color: rgba(34,197,94,0.4) !important;">
+                <i class="bi bi-award fs-1 text-success mb-3"></i>
+                <h4 class="fw-bold mb-1">Tercer Nivel</h4>
+                <p class="text-muted small mb-1">Diversificado (Décimo y Undécimo)</p>
+                <p class="text-muted small mb-4">Para estudiantes del Ciclo Diversificado.</p>
+                <a href="{{ url_for('matricula_enroll', cycle='tercer_nivel') }}" class="btn btn-success fw-bold">
+                    <i class="bi bi-calendar-plus me-2"></i>Sacar Cita
                 </a>
             </div>
         </div>

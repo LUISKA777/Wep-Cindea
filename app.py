@@ -535,8 +535,13 @@ def admin_settings():
             'mat_apt_duration': request.form.get('mat_apt_duration', '30'),
             'mat_primaria_opening': request.form.get('mat_primaria_opening') or None,
             'mat_primaria_closing': request.form.get('mat_primaria_closing') or None,
-            'mat_secundaria_opening': request.form.get('mat_secundaria_opening') or None,
-            'mat_secundaria_closing': request.form.get('mat_secundaria_closing') or None,
+            'mat_primaria_cupos': request.form.get('mat_primaria_cupos') or None,
+            'mat_segundo_nivel_opening': request.form.get('mat_segundo_nivel_opening') or None,
+            'mat_segundo_nivel_closing': request.form.get('mat_segundo_nivel_closing') or None,
+            'mat_segundo_nivel_cupos': request.form.get('mat_segundo_nivel_cupos') or None,
+            'mat_tercer_nivel_opening': request.form.get('mat_tercer_nivel_opening') or None,
+            'mat_tercer_nivel_closing': request.form.get('mat_tercer_nivel_closing') or None,
+            'mat_tercer_nivel_cupos': request.form.get('mat_tercer_nivel_cupos') or None,
         }
         current = sb_get('settings', 'select=*')
         if isinstance(current, list) and len(current) > 0:
@@ -566,8 +571,13 @@ def admin_settings():
     s.setdefault('mat_apt_duration', '30')
     s.setdefault('mat_primaria_opening', '')
     s.setdefault('mat_primaria_closing', '')
-    s.setdefault('mat_secundaria_opening', '')
-    s.setdefault('mat_secundaria_closing', '')
+    s.setdefault('mat_primaria_cupos', '')
+    s.setdefault('mat_segundo_nivel_opening', '')
+    s.setdefault('mat_segundo_nivel_closing', '')
+    s.setdefault('mat_segundo_nivel_cupos', '')
+    s.setdefault('mat_tercer_nivel_opening', '')
+    s.setdefault('mat_tercer_nivel_closing', '')
+    s.setdefault('mat_tercer_nivel_cupos', '')
     return render_template('admin_settings.html', settings=s)
 
 @app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
@@ -796,16 +806,22 @@ def delete_enrollment_date(id):
 
 MATRICULA_CYCLES = {
     'primaria': {
-        'label': 'Primaria',
+        'label': 'Primer Nivel (Primaria)',
         'icon': 'bi-book',
         'color': 'warning',
         'description': 'Matrícula para estudiantes de Educación Primaria (1° a 6° grado).'
     },
-    'secundaria': {
-        'label': 'Secundaria',
+    'segundo_nivel': {
+        'label': 'Segundo Nivel (7°, 8° y 9°)',
         'icon': 'bi-mortarboard',
         'color': 'info',
-        'description': 'Matrícula para estudiantes de Educación Secundaria (7° a 12° año).'
+        'description': 'Matrícula para estudiantes de Segundo Nivel: Sétimo, Octavo y Noveno año.'
+    },
+    'tercer_nivel': {
+        'label': 'Tercer Nivel — Diversificado (10° y 11°)',
+        'icon': 'bi-award',
+        'color': 'success',
+        'description': 'Matrícula para estudiantes del Ciclo Diversificado: Décimo y Undécimo año.'
     }
 }
 
@@ -849,11 +865,17 @@ def matricula_schedule(cycle, name, cedula, phone):
     now_cr = datetime.now(CR_TZ)
     today = now_cr.date()
 
-    # Fechas de apertura/cierre según ciclo (campos específicos)
-    opening_key = 'mat_primaria_opening' if cycle == 'primaria' else 'mat_secundaria_opening'
-    closing_key = 'mat_primaria_closing' if cycle == 'primaria' else 'mat_secundaria_closing'
+    # Fechas de apertura/cierre y cupos según ciclo (campos específicos)
+    cycle_key_map = {
+        'primaria':      ('mat_primaria_opening',      'mat_primaria_closing',      'mat_primaria_cupos'),
+        'segundo_nivel': ('mat_segundo_nivel_opening', 'mat_segundo_nivel_closing', 'mat_segundo_nivel_cupos'),
+        'tercer_nivel':  ('mat_tercer_nivel_opening',  'mat_tercer_nivel_closing',  'mat_tercer_nivel_cupos'),
+    }
+    opening_key, closing_key, cupos_key = cycle_key_map.get(cycle, ('mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos'))
     opening_val = gs.get(opening_key) or None
     closing_val = gs.get(closing_key) or None
+    cupos_val = gs.get(cupos_key)
+    max_cupos = int(cupos_val) if cupos_val and str(cupos_val).isdigit() else None
 
     # Sin fechas configuradas → no hay citas disponibles
     matricula_configured = bool(opening_val or closing_val)
@@ -917,6 +939,12 @@ def matricula_schedule(cycle, name, cedula, phone):
             taken_set.add((d_val, slot['appointment_time']))
 
     available_slots = [s2 for s2 in all_possible_slots if (s2['date'], s2['time']) not in taken_set]
+
+    # Limitar por cupos configurados
+    if max_cupos is not None:
+        booked_count = len(taken_set)
+        remaining_cupos = max(0, max_cupos - booked_count)
+        available_slots = available_slots[:remaining_cupos]
 
     unique_dates = sorted(list(set(s2['date'] for s2 in available_slots)))
     formatted_dates = [{'value': d, 'label': format_date_spanish(d)} for d in unique_dates]

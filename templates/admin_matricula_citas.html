@@ -11,7 +11,7 @@
 
 <div class="card shadow border-primary">
     <div class="card-header fw-bold py-3 bg-primary text-white">
-        <i class="bi bi-calendar-check me-2"></i>Citas Programadas (Primaria / Secundaria)
+        <i class="bi bi-calendar-check me-2"></i>Citas Programadas — Tres Niveles
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -34,9 +34,13 @@
                         <td>{{ apt.student_phone }}</td>
                         <td class="text-center">
                             {% if apt.cycle == 'primaria' %}
-                                <span class="badge bg-warning text-dark">Primaria</span>
+                                <span class="badge bg-warning text-dark">1er Nivel (Primaria)</span>
+                            {% elif apt.cycle == 'segundo_nivel' %}
+                                <span class="badge bg-info text-dark">2do Nivel (7°-9°)</span>
+                            {% elif apt.cycle == 'tercer_nivel' %}
+                                <span class="badge bg-success">3er Nivel (10°-11°)</span>
                             {% else %}
-                                <span class="badge bg-info text-dark">Secundaria</span>
+                                <span class="badge bg-secondary">{{ apt.cycle }}</span>
                             {% endif %}
                         </td>
                         <td class="text-center">
