@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Diagnóstico Supabase - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary"><i class="bi bi-tools me-2"></i>Diagnóstico — Columnas de Matrícula</h2>
+    <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-2"></i>Volver a Configuración
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-bold py-3">
+        <i class="bi bi-database me-2 text-primary"></i>Estado de columnas en Supabase
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr class="table-light">
+                    <th class="ps-4">Columna</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col, info in col_tests.items() %}
+                <tr>
+                    <td class="ps-4 font-monospace small">{{ col }}</td>
+                    <td>
+                        {% if info.ok %}
+                            <span class="badge bg-success">✅ Existe</span>
+                        {% else %}
+                            <span class="badge bg-danger">❌ Falta</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ info.msg }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% set missing = col_tests.values() | selectattr('ok', 'equalto', false) | list %}
+{% if missing %}
+<div class="alert alert-danger">
+    <h5 class="fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Columnas faltantes detectadas</h5>
+    <p class="mb-2">Debe ejecutar el siguiente SQL en <strong>Supabase → SQL Editor</strong>:</p>
+    <pre class="bg-dark text-light p-3 rounded small">ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS mat_primaria_opening   DATE,
+  ADD COLUMN IF NOT EXISTS mat_primaria_closing   DATE,
+  ADD COLUMN IF NOT EXISTS mat_primaria_cupos     TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_opening DATE,
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_closing DATE,
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_cupos   TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_opening  DATE,
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_closing  DATE,
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_cupos    TEXT DEFAULT '';</pre>
+    <p class="mb-0 small">Después de ejecutar ese SQL, recargue esta página para confirmar.</p>
+</div>
+{% else %}
+<div class="alert alert-success">
+    <i class="bi bi-check-circle me-2"></i><strong>Todo correcto.</strong> Todas las columnas existen. Si la configuración aún no guarda, revise los mensajes de error en la página de Configuración.
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-header fw-bold py-3">
+        <i class="bi bi-braces me-2 text-muted"></i>Datos actuales en settings
+    </div>
+    <div class="card-body">
+        <pre class="small text-muted mb-0" style="white-space: pre-wrap;">{{ settings_raw | tojson(indent=2) }}</pre>
+    </div>
+</div>
+{% endblock %}

@@ -4,9 +4,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-primary">Configuración General</h2>
-    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
-        <i class="bi bi-arrow-left me-2"></i>Volver al Panel
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('admin_diagnostico') }}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-tools me-1"></i>Diagnóstico BD
+        </a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Volver al Panel
+        </a>
+    </div>
 </div>
 
 <form method="POST">

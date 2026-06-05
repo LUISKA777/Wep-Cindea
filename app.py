@@ -55,7 +55,11 @@ def sb_post(table, data):
     r = http.post(url, json=data, headers=HEADERS)
     if r.status_code >= 400:
         print(f"Supabase Post Error {r.status_code}: {r.text}")
-    return r.json()
+        return r  # devuelve response para chequear status_code
+    try:
+        return r.json()
+    except Exception:
+        return r
 
 def sb_patch(table, match_col, match_val, data):
     url = f"{SUPABASE_URL}/rest/v1/{table}?{match_col}=eq.{match_val}"
@@ -516,8 +520,38 @@ def add_course():
 @login_required
 def admin_settings():
     if request.method == 'POST':
-        settings_data = {
-            # Horarios generales (cursos)
+        # ── Guardar en bloques separados para que un campo faltante no rompa todo ──
+        current = sb_get('settings', 'select=*')
+        is_update = isinstance(current, list) and len(current) > 0
+        settings_id = current[0]['id'] if is_update else None
+
+        errors = []
+
+        def _save(data, label):
+            """Guarda un bloque de datos y registra errores sin lanzar excepción."""
+            nonlocal is_update, settings_id
+            try:
+                if is_update:
+                    r = sb_patch('settings', 'id', settings_id, data)
+                    if hasattr(r, 'status_code') and r.status_code >= 400:
+                        errors.append(f"{label}: {r.text[:200]}")
+                else:
+                    r = sb_post('settings', data)
+                    if hasattr(r, 'status_code') and r.status_code >= 400:
+                        errors.append(f"{label}: {r.text[:200]}")
+                    else:
+                        # Primer insert exitoso — guardar id para PATCHes siguientes
+                        if isinstance(r, list) and r:
+                            is_update = True
+                            settings_id = r[0].get('id')
+                        elif isinstance(r, dict) and r.get('id'):
+                            is_update = True
+                            settings_id = r['id']
+            except Exception as e:
+                errors.append(f"{label}: {e}")
+
+        # Bloque 1 — configuración de cursos (columnas que siempre existen)
+        _save({
             'work_days': request.form.get('work_days'),
             'start_time': request.form.get('start_time'),
             'end_time': request.form.get('end_time'),
@@ -526,29 +560,46 @@ def admin_settings():
             'apt_duration': request.form.get('apt_duration', '60'),
             'global_opening_date': request.form.get('global_opening_date') or None,
             'global_closing_date': request.form.get('global_closing_date') or None,
-            # Horarios matrícula
+        }, 'Horario cursos')
+
+        # Bloque 2 — horario de matrícula compartido
+        _save({
             'mat_work_days': request.form.get('mat_work_days'),
             'mat_start_time': request.form.get('mat_start_time'),
             'mat_end_time': request.form.get('mat_end_time'),
             'mat_lunch_start': request.form.get('mat_lunch_start'),
             'mat_lunch_end': request.form.get('mat_lunch_end'),
             'mat_apt_duration': request.form.get('mat_apt_duration', '30'),
+        }, 'Horario matrícula')
+
+        # Bloque 3 — fechas y cupos Primer Nivel (Primaria)
+        _save({
             'mat_primaria_opening': request.form.get('mat_primaria_opening') or None,
             'mat_primaria_closing': request.form.get('mat_primaria_closing') or None,
-            'mat_primaria_cupos': request.form.get('mat_primaria_cupos') or '',
+            'mat_primaria_cupos':   request.form.get('mat_primaria_cupos') or None,
+        }, 'Fechas/cupos Primaria')
+
+        # Bloque 4 — fechas y cupos Segundo Nivel
+        _save({
             'mat_segundo_nivel_opening': request.form.get('mat_segundo_nivel_opening') or None,
             'mat_segundo_nivel_closing': request.form.get('mat_segundo_nivel_closing') or None,
-            'mat_segundo_nivel_cupos': request.form.get('mat_segundo_nivel_cupos') or '',
+            'mat_segundo_nivel_cupos':   request.form.get('mat_segundo_nivel_cupos') or None,
+        }, 'Fechas/cupos Segundo Nivel')
+
+        # Bloque 5 — fechas y cupos Tercer Nivel
+        _save({
             'mat_tercer_nivel_opening': request.form.get('mat_tercer_nivel_opening') or None,
             'mat_tercer_nivel_closing': request.form.get('mat_tercer_nivel_closing') or None,
-            'mat_tercer_nivel_cupos': request.form.get('mat_tercer_nivel_cupos') or '',
-        }
-        current = sb_get('settings', 'select=*')
-        if isinstance(current, list) and len(current) > 0:
-            sb_patch('settings', 'id', current[0]['id'], settings_data)
+            'mat_tercer_nivel_cupos':   request.form.get('mat_tercer_nivel_cupos') or None,
+        }, 'Fechas/cupos Tercer Nivel')
+
+        if errors:
+            # Mostrar errores reales al admin en lugar de fingir éxito
+            for e in errors:
+                flash(f'⚠️ Error guardando — {e}', 'danger')
+            flash('Algunos datos no se pudieron guardar. Verifique que ejecutó supabase_migration.sql en Supabase.', 'warning')
         else:
-            sb_post('settings', settings_data)
-        flash('Configuración actualizada exitosamente.', 'success')
+            flash('Configuración actualizada exitosamente.', 'success')
         return redirect(url_for('admin_settings'))
 
     settings = sb_get('settings', 'select=*')
@@ -1057,6 +1108,29 @@ def delete_matricula_cita(id):
         flash(f'Error al eliminar: {r.status_code}', 'danger')
     return redirect(url_for('admin_matricula_citas'))
 
+
+
+@app.route('/admin/diagnostico')
+@login_required
+def admin_diagnostico():
+    """Muestra el estado real de la tabla settings en Supabase."""
+    result = sb_get('settings', 'select=*')
+    
+    # Intentar un PATCH de prueba con los campos nuevos para detectar columnas faltantes
+    col_tests = {}
+    if isinstance(result, list) and result:
+        sid = result[0]['id']
+        test_fields = [
+            'mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos',
+            'mat_segundo_nivel_opening', 'mat_segundo_nivel_closing', 'mat_segundo_nivel_cupos',
+            'mat_tercer_nivel_opening', 'mat_tercer_nivel_closing', 'mat_tercer_nivel_cupos',
+        ]
+        for field in test_fields:
+            url = f"{SUPABASE_URL}/rest/v1/settings?id=eq.{sid}"
+            r = http.patch(url, json={field: result[0].get(field)}, headers=HEADERS)
+            col_tests[field] = {'ok': r.status_code < 400, 'status': r.status_code, 'msg': r.text[:100] if r.status_code >= 400 else '✅'}
+
+    return render_template('admin_diagnostico.html', settings_raw=result, col_tests=col_tests)
 
 handler = app
 
