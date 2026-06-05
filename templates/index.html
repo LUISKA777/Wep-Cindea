@@ -57,13 +57,24 @@
         <div class="mx-auto" style="width: 60px; height: 4px; background: var(--accent-cyan); border-radius: 2px;"></div>
 
         <div class="mt-4">
-            <p class="small text-muted mb-3">Filtrar por nivel educativo:</p>
-            <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <p class="small text-muted mb-2">Filtrar por ciclo:</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap mb-2">
                 <a href="{{ url_for('index') }}"
                    class="btn btn-sm {{ 'btn-primary' if not selected_level else 'btn-outline-primary' }} rounded-pill px-3">
                    Todos
                 </a>
-                {% set available_levels = ["Primaria Aprobada", "Secundaria Incompleta", "Secundaria Completa"] %}
+                <a href="{{ url_for('index', cycle='primaria') }}"
+                   class="btn btn-sm {{ 'btn-warning fw-bold' if selected_cycle == 'primaria' else 'btn-outline-warning' }} rounded-pill px-3">
+                   <i class="bi bi-book me-1"></i>Primaria
+                </a>
+                <a href="{{ url_for('index', cycle='secundaria') }}"
+                   class="btn btn-sm {{ 'btn-info fw-bold' if selected_cycle == 'secundaria' else 'btn-outline-info' }} rounded-pill px-3">
+                   <i class="bi bi-mortarboard me-1"></i>Secundaria
+                </a>
+            </div>
+            <p class="small text-muted mb-2 mt-3">O filtrar por nivel exacto:</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                {% set available_levels = ["Primaria Aprobada", "Secundaria Incompleta", "Secundaria Completa", "Solo saber leer y escribir"] %}
                 {% for lvl in available_levels %}
                 <a href="{{ url_for('index', level=lvl) }}"
                    class="btn btn-sm {{ 'btn-primary' if selected_level == lvl else 'btn-outline-primary' }} rounded-pill px-3">

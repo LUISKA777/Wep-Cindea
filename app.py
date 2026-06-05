@@ -98,12 +98,23 @@ def get_vacancies_left(course):
 @app.route('/')
 def index():
     selected_level = request.args.get('level')
+    selected_cycle = request.args.get('cycle')
     courses = sb_get('courses', 'select=*')
     if not isinstance(courses, list):
         courses = []
 
+    # Filtro rapido por ciclo (Primaria / Secundaria)
+    PRIMARIA_LEVELS = ['Primaria Aprobada', 'Solo saber leer y escribir']
+    SECUNDARIA_LEVELS = ['Secundaria Incompleta', 'Secundaria Completa']
+
+    if selected_cycle == 'primaria':
+        courses = [c for c in courses if c.get('required_levels') and
+                   any(lvl in c['required_levels'].split(',') for lvl in PRIMARIA_LEVELS)]
+    elif selected_cycle == 'secundaria':
+        courses = [c for c in courses if c.get('required_levels') and
+                   any(lvl in c['required_levels'].split(',') for lvl in SECUNDARIA_LEVELS)]
     # Filter courses by educational level if a filter is selected
-    if selected_level:
+    elif selected_level:
         courses = [c for c in courses if c.get('required_levels') and selected_level in c['required_levels'].split(',')]
 
     today_str = datetime.now(CR_TZ).date().isoformat()
@@ -117,11 +128,12 @@ def index():
         else:
             c['is_closed'] = False
 
-    return render_template('index.html', courses=courses, selected_level=selected_level)
+    return render_template('index.html', courses=courses, selected_level=selected_level, selected_cycle=selected_cycle)
 
 @app.route('/posts')
 def posts():
-    res = sb_get('posts', 'select=*&order=created_at.desc')
+    # Solo mostrar posts que estén marcados como publicados
+    res = sb_get('posts', 'select=*&published=eq.true&order=created_at.desc')
     if isinstance(res, dict) and 'error' in res:
         return f"Error de Supabase ({res['error']}): {res['text']}", 500
     if not isinstance(res, list):
@@ -470,7 +482,7 @@ def add_course():
     required_levels_str = ",".join(required_levels_list)
 
     if name and description and vacancies:
-        res = sb_post('courses', {
+        course_data = {
             'name': name,
             'description': description,
             'total_vacancies': int(vacancies),
@@ -482,10 +494,17 @@ def add_course():
             'lunch_end': lunch_end,
             'apt_duration': apt_duration,
             'manual_slots': manual_slots,
-            'opening_date': request.form.get('opening_date'),
-            'closing_date': closing_date,
             'required_levels': required_levels_str
-        })
+        }
+
+        opening_date = request.form.get('opening_date')
+        if opening_date:
+            course_data['opening_date'] = opening_date
+
+        if closing_date:
+            course_data['closing_date'] = closing_date
+
+        res = sb_post('courses', course_data)
         if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
             flash('Curso agregado exitosamente.', 'success')
         else:
@@ -557,7 +576,7 @@ def edit_course(id):
         required_levels_str = ",".join(required_levels_list)
 
         if name and description and vacancies:
-            r = sb_patch('courses', 'id', id, {
+            course_data = {
                 'name': name,
                 'description': description,
                 'total_vacancies': int(vacancies),
@@ -568,10 +587,18 @@ def edit_course(id):
                 'lunch_end': lunch_end,
                 'apt_duration': apt_duration,
                 'manual_slots': manual_slots,
-                'opening_date': request.form.get('opening_date'),
-                'closing_date': request.form.get('closing_date'),
                 'required_levels': required_levels_str
-            })
+            }
+
+            opening_date = request.form.get('opening_date')
+            if opening_date:
+                course_data['opening_date'] = opening_date
+
+            closing_date_val = request.form.get('closing_date')
+            if closing_date_val:
+                course_data['closing_date'] = closing_date_val
+
+            r = sb_patch('courses', 'id', id, course_data)
             if r.status_code in [200, 204]:
                 flash('Curso actualizado exitosamente.', 'success')
             else:
@@ -610,7 +637,7 @@ def delete_appointment(id):
 @app.route('/admin/posts')
 @login_required
 def admin_posts():
-    posts = sb_get('posts', 'select=*,order=created_at.desc')
+    posts = sb_get('posts', 'select=*&order=created_at.desc')
     if not isinstance(posts, list):
         posts = []
     return render_template('admin_posts.html', posts=posts)
@@ -621,8 +648,9 @@ def add_post():
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
+        published = 'true' if request.form.get('published') else 'false'
         if title and content:
-            res = sb_post('posts', {'title': title, 'content': content})
+            res = sb_post('posts', {'title': title, 'content': content, 'published': published})
             if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
                 flash('Post agregado exitosamente.', 'success')
             else:
@@ -731,6 +759,17 @@ def admin_matriculas():
     if not isinstance(data, list):
         data = []
     return render_template('admin_matriculas.html', dates=data)
+
+
+@app.route('/admin/matriculas/delete/<int:id>')
+@login_required
+def delete_enrollment_date(id):
+    r = sb_delete('enrollment_dates', 'id', id)
+    if r.status_code in [200, 204]:
+        flash('Fecha de matrícula eliminada exitosamente.', 'success')
+    else:
+        flash(f'Error al eliminar fecha: {r.status_code}', 'danger')
+    return redirect(url_for('admin_matriculas'))
 
 
 handler = app

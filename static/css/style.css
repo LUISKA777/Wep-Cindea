@@ -201,6 +201,39 @@ body {
     text-align: center;
 }
 
+/* Modal Dark Theme */
+.modal-content {
+    background-color: var(--bg-slate) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.modal-body .form-label {
+    color: var(--text-main) !important;
+}
+
+.modal-body .form-check-label {
+    color: var(--text-main) !important;
+}
+
+.form-check-input {
+    background-color: var(--bg-deep) !important;
+    border-color: var(--glass-border) !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
 /* Print Styles */
 @media print {
     body {
@@ -223,4 +256,113 @@ body {
     .ticket-value, .ticket-label {
         color: black !important;
     }
+}
+
+/* ===== Modal overrides — fondo claro para formularios admin ===== */
+.modal-content {
+    background: #1e293b !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+.modal-header {
+    background: rgba(255,255,255,0.05) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.modal-body .form-control,
+.modal-body .form-select,
+.modal-body textarea {
+    background-color: #0f172a !important;
+    color: var(--text-main) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+.modal-body .form-control::placeholder,
+.modal-body textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.modal-body .form-label,
+.modal-body label,
+.modal-body h6 {
+    color: var(--text-main) !important;
+}
+
+/* Checkboxes en el modal — fondo y borde visibles */
+.modal-body .form-check-input {
+    background-color: #0f172a !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.modal-body .form-check-input:checked {
+    background-color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.modal-body .form-check-label {
+    color: var(--text-main) !important;
+}
+
+/* Contenedor de checkboxes niveles educativos */
+.modal-body .d-flex.flex-wrap.gap-3.p-2.border.rounded {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Card bg-light dentro del modal */
+.modal-body .card.bg-light {
+    background: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+
+.modal-body .card.bg-light .card-body {
+    background: transparent !important;
+}
+
+/* Inputs en páginas admin (fuera de modal también) */
+.form-control,
+.form-select {
+    background-color: #0f172a !important;
+    color: var(--text-main) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #0f172a !important;
+    color: var(--text-main) !important;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 0.2rem rgba(6,182,212,0.2) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* input-group-text (íconos en forms) */
+.input-group-text {
+    background-color: #1e293b !important;
+    color: var(--text-muted) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Tables en páginas admin */
+.table {
+    color: var(--text-main) !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+    color: var(--text-main) !important;
+    background-color: rgba(255,255,255,0.05) !important;
+}
+
+/* form-text (subtextos) */
+.form-text {
+    color: var(--text-muted) !important;
+}
+
+/* Badge text-dark override para fondo claro */
+.badge.bg-primary.text-dark {
+    color: #0f172a !important;
 }

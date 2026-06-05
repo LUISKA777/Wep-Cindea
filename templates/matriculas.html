@@ -3,65 +3,47 @@
 
 {% block content %}
 <div class="container py-5">
-    <h1 class="text-center mb-5">Calendario de Matrícula</h1>
+    <h1 class="text-center mb-2">Calendario de Matrícula</h1>
+    <div class="mx-auto mb-5" style="width: 60px; height: 4px; background: var(--accent-cyan); border-radius: 2px;"></div>
 
+    {% set has_data = namespace(found=false) %}
     {% for cycle, items in grouped_dates.items() %}
-    <div class="mb-5">
-        <h2 class="text-primary border-bottom pb-2 mb-4">{{ cycle }}</h2>
-        <div class="table-responsive bg-white shadow-sm rounded p-3">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nivel</th>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Cierre</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for d in items %}
-                    <tr class="border-bottom">
-                        <td><strong class="text-dark">{{ d.level }}</strong></td>
-                        <td>{{ d.start_date }}</td>
-                        <td>{{ d.end_date }}</td>
-                    </tr>
-                    {% else %}
-                    <tr class="text-center text-muted">
-                        <td colspan="3" class="py-3">No se encontraron fechas para este ciclo.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+        {% if items %}{% set has_data.found = true %}{% endif %}
     {% endfor %}
 
-    {% if all_dates %}
-    <div class="alert alert-info mt-5 p-4 shadow-sm">
-        <h4 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Verificación de Datos</h4>
-        <p>Si las tablas de arriba están vacías, es que el nombre en la base de datos no coincide con los filtros.</p>
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered bg-white">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Nivel exacto en DB</th>
-                        <th>Inicio</th>
-                        <th>Fin</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for d in all_dates %}
-                    <tr class="small">
-                        <td>{{ d.id }}</td>
-                        <td><code class="text-primary fw-bold">{{ d.level }}</code></td>
-                        <td>{{ d.start_date }}</td>
-                        <td>{{ d.end_date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    {% if has_data.found %}
+        {% for cycle, items in grouped_dates.items() %}
+        {% if items %}
+        <div class="mb-5">
+            <h2 class="text-primary border-bottom pb-2 mb-4" style="border-color: var(--glass-border) !important;">{{ cycle }}</h2>
+            <div class="shadow-sm rounded p-3" style="background: var(--bg-slate); border: 1px solid var(--glass-border);">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--glass-border); color: var(--text-muted);">
+                            <th>Nivel</th>
+                            <th>Fecha de Inicio</th>
+                            <th>Fecha de Cierre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in items %}
+                        <tr style="border-bottom: 1px solid var(--glass-border);">
+                            <td class="fw-bold">{{ d.level }}</td>
+                            <td>{{ d.start_date }}</td>
+                            <td>{{ d.end_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div}
+        {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-calendar-x fs-1 mb-3 d-block"></i>
+            <p class="mb-0">No hay fechas de matrícula programadas en este momento.</p>
+        </div>
     {% endif %}
 </div>
 {% endblock %}
