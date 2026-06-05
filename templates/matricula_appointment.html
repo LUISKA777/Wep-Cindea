@@ -18,7 +18,15 @@
                     </p>
                 </div>
 
-                {% if dates %}
+                {% if not matricula_configured %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x fs-1 text-warning mb-3 d-block"></i>
+                    <h5 class="fw-bold mb-2">Matrícula no disponible aún</h5>
+                    <p class="text-muted mb-4">El periodo de matrícula para <strong>{{ info.label }}</strong> no ha sido habilitado todavía.<br>Consulte al personal administrativo o vuelva más tarde.</p>
+                    <a href="{{ url_for('matriculas') }}" class="btn btn-outline-primary">Ver fechas de matrícula</a>
+                </div>
+
+                {% elif dates %}
                 <form method="POST">
                     <div class="row g-4">
                         <div class="col-md-6">
@@ -47,11 +55,12 @@
                         <a href="{{ url_for('matricula_enroll', cycle=cycle) }}" class="btn btn-link text-muted text-center">Volver</a>
                     </div>
                 </form>
+
                 {% else %}
                 <div class="text-center py-5 text-muted">
                     <i class="bi bi-calendar-x fs-1 mb-3 d-block"></i>
                     <p class="mb-0 fw-bold">No hay horarios disponibles en este momento.</p>
-                    <p class="small mt-2">Es posible que el periodo de matrícula no haya iniciado o ya haya finalizado.</p>
+                    <p class="small mt-2">Es posible que todos los horarios estén ocupados o el periodo haya finalizado.</p>
                     <a href="{{ url_for('matriculas') }}" class="btn btn-outline-primary mt-3">Ver fechas de matrícula</a>
                 </div>
                 {% endif %}

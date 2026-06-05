@@ -1,56 +1,151 @@
 {% extends "base.html" %}
-{% block title %}Configuración de Horarios - Cindea{% endblock %}
+{% block title %}Configuración - Cindea{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow border-0">
-            <div class="card-header py-3 text-center">
-                <h4 class="mb-0">Configuración de Horarios y Atención</h4>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary">Configuración General</h2>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Panel
+    </a>
+</div>
+
+<form method="POST">
+<div class="row g-4">
+
+    <!-- ═══ SECCIÓN CURSOS ═══ -->
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold py-3">
+                <i class="bi bi-book me-2 text-primary"></i>Horarios para Citas de Cursos
             </div>
             <div class="card-body p-4">
-                <form method="POST">
-                    <div class="row g-4">
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Días Laborales (0=Dom, 1=Lun, etc.)</label>
-                            <input type="text" class="form-control" name="work_days" value="{{ settings.work_days }}" placeholder="Ej: 1,2,3,4,5">
-                            <div class="form-text">Ingresa los números de los días separados por comas.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Hora de Inicio</label>
-                            <input type="time" class="form-control" name="start_time" value="{{ settings.start_time }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Hora de Fin</label>
-                            <input type="time" class="form-control" name="end_time" value="{{ settings.end_time }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Inicio Almuerzo</label>
-                            <input type="time" class="form-control" name="lunch_start" value="{{ settings.lunch_start }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Fin Almuerzo</label>
-                            <input type="time" class="form-control" name="lunch_end" value="{{ settings.lunch_end }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Fecha de Inicio Global</label>
-                            <input type="date" class="form-control" name="global_opening_date" value="{{ settings.global_opening_date }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Fecha de Fin Global</label>
-                            <input type="date" class="form-control" name="global_closing_date" value="{{ settings.global_closing_date }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Duración de la Cita (minutos)</label>
-                            <input type="number" class="form-control" name="apt_duration" value="{{ settings.apt_duration }}" required>
-                        </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Días Laborales</label>
+                        <input type="text" class="form-control" name="work_days" value="{{ settings.work_days }}" placeholder="0=Lun,1=Mar,2=Mie,3=Jue,4=Vie,5=Sab,6=Dom — Ej: 0,1,2,3,4">
+                        <div class="form-text">Números separados por coma. 0=Lunes, 1=Martes ... 6=Domingo</div>
                     </div>
-                    <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Guardar Configuración <i class="bi bi-save ms-2"></i></button>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hora de Inicio</label>
+                        <input type="time" class="form-control" name="start_time" value="{{ settings.start_time }}" required>
                     </div>
-                </form>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hora de Fin</label>
+                        <input type="time" class="form-control" name="end_time" value="{{ settings.end_time }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Inicio Almuerzo</label>
+                        <input type="time" class="form-control" name="lunch_start" value="{{ settings.lunch_start }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fin Almuerzo</label>
+                        <input type="time" class="form-control" name="lunch_end" value="{{ settings.lunch_end }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Duración por Cita (min)</label>
+                        <input type="number" class="form-control" name="apt_duration" value="{{ settings.apt_duration }}" required min="5">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Fecha Inicio Global (cursos)</label>
+                        <input type="date" class="form-control" name="global_opening_date" value="{{ settings.global_opening_date or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Fecha Fin Global (cursos)</label>
+                        <input type="date" class="form-control" name="global_closing_date" value="{{ settings.global_closing_date or '' }}">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- ═══ SECCIÓN MATRÍCULA ═══ -->
+    <div class="col-12">
+        <div class="card shadow-sm" style="border-color: rgba(6,182,212,0.4) !important;">
+            <div class="card-header fw-bold py-3">
+                <i class="bi bi-calendar-check me-2 text-primary"></i>Configuración de Matrícula
+                <span class="badge bg-primary ms-2 small">Primaria &amp; Secundaria</span>
+            </div>
+            <div class="card-body p-4">
+
+                <!-- Horarios compartidos de matrícula -->
+                <h6 class="fw-bold text-muted mb-3 small text-uppercase">Horario de Atención para Matrícula</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Días Laborales</label>
+                        <input type="text" class="form-control" name="mat_work_days" value="{{ settings.mat_work_days }}" placeholder="Ej: 0,1,2,3,4">
+                        <div class="form-text">Misma lógica que cursos. Dejar vacío para usar la config de cursos.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hora de Inicio</label>
+                        <input type="time" class="form-control" name="mat_start_time" value="{{ settings.mat_start_time }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hora de Fin</label>
+                        <input type="time" class="form-control" name="mat_end_time" value="{{ settings.mat_end_time }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Inicio Almuerzo</label>
+                        <input type="time" class="form-control" name="mat_lunch_start" value="{{ settings.mat_lunch_start }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fin Almuerzo</label>
+                        <input type="time" class="form-control" name="mat_lunch_end" value="{{ settings.mat_lunch_end }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Duración por Cita (min)</label>
+                        <input type="number" class="form-control" name="mat_apt_duration" value="{{ settings.mat_apt_duration }}" min="5" placeholder="30">
+                        <div class="form-text">Tiempo por estudiante en matrícula.</div>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--glass-border);">
+
+                <!-- Fechas Primaria -->
+                <div class="row g-3 mt-1 mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold mb-1"><i class="bi bi-book text-warning me-2"></i>Periodo de Matrícula — Primaria</h6>
+                        <p class="text-muted small mb-3">Si no se definen fechas, el sistema mostrará "No hay citas disponibles" para Primaria.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fecha de Apertura</label>
+                        <input type="date" class="form-control" name="mat_primaria_opening" value="{{ settings.mat_primaria_opening or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fecha de Cierre</label>
+                        <input type="date" class="form-control" name="mat_primaria_closing" value="{{ settings.mat_primaria_closing or '' }}">
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--glass-border);">
+
+                <!-- Fechas Secundaria -->
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <h6 class="fw-bold mb-1"><i class="bi bi-mortarboard text-info me-2"></i>Periodo de Matrícula — Secundaria</h6>
+                        <p class="text-muted small mb-3">Si no se definen fechas, el sistema mostrará "No hay citas disponibles" para Secundaria.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fecha de Apertura</label>
+                        <input type="date" class="form-control" name="mat_secundaria_opening" value="{{ settings.mat_secundaria_opening or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Fecha de Cierre</label>
+                        <input type="date" class="form-control" name="mat_secundaria_closing" value="{{ settings.mat_secundaria_closing or '' }}">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                <i class="bi bi-save me-2"></i>Guardar Toda la Configuración
+            </button>
+        </div>
+    </div>
+
 </div>
+</form>
 {% endblock %}

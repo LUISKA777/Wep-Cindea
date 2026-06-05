@@ -517,37 +517,57 @@ def add_course():
 def admin_settings():
     if request.method == 'POST':
         settings_data = {
-            'work_days': request.form.get('work_days'), # e.g. "1,2,3,4,5" (Mon-Fri)
-            'start_time': request.form.get('start_time'), # "08:00"
-            'end_time': request.form.get('end_time'), # "16:00"
-            'lunch_start': request.form.get('lunch_start'), # "12:00"
-            'lunch_end': request.form.get('lunch_end'), # "13:00"
-            'apt_duration': request.form.get('apt_duration', '60'), # "60" minutes
-            'global_opening_date': request.form.get('global_opening_date'),
-            'global_closing_date': request.form.get('global_closing_date')
+            # Horarios generales (cursos)
+            'work_days': request.form.get('work_days'),
+            'start_time': request.form.get('start_time'),
+            'end_time': request.form.get('end_time'),
+            'lunch_start': request.form.get('lunch_start'),
+            'lunch_end': request.form.get('lunch_end'),
+            'apt_duration': request.form.get('apt_duration', '60'),
+            'global_opening_date': request.form.get('global_opening_date') or None,
+            'global_closing_date': request.form.get('global_closing_date') or None,
+            # Horarios matrícula
+            'mat_work_days': request.form.get('mat_work_days'),
+            'mat_start_time': request.form.get('mat_start_time'),
+            'mat_end_time': request.form.get('mat_end_time'),
+            'mat_lunch_start': request.form.get('mat_lunch_start'),
+            'mat_lunch_end': request.form.get('mat_lunch_end'),
+            'mat_apt_duration': request.form.get('mat_apt_duration', '30'),
+            'mat_primaria_opening': request.form.get('mat_primaria_opening') or None,
+            'mat_primaria_closing': request.form.get('mat_primaria_closing') or None,
+            'mat_secundaria_opening': request.form.get('mat_secundaria_opening') or None,
+            'mat_secundaria_closing': request.form.get('mat_secundaria_closing') or None,
         }
-
-        # Get existing settings safely
         current = sb_get('settings', 'select=*')
         if isinstance(current, list) and len(current) > 0:
             sb_patch('settings', 'id', current[0]['id'], settings_data)
         else:
-            # If it's a new table or empty, we post.
-            # Note: If table doesn't exist, this will still fail via API, but not crash the server
             sb_post('settings', settings_data)
-
         flash('Configuración actualizada exitosamente.', 'success')
         return redirect(url_for('admin_settings'))
 
     settings = sb_get('settings', 'select=*')
-    s = settings[0] if (isinstance(settings, list) and len(settings) > 0) else {
-        'work_days': '0,1,2,3,4',
-        'start_time': '08:00',
-        'end_time': '16:00',
-        'lunch_start': '12:00',
-        'lunch_end': '13:00',
-        'apt_duration': '60'
-    }
+    s = settings[0] if (isinstance(settings, list) and len(settings) > 0) else {}
+    # Defaults cursos
+    s.setdefault('work_days', '0,1,2,3,4')
+    s.setdefault('start_time', '08:00')
+    s.setdefault('end_time', '16:00')
+    s.setdefault('lunch_start', '12:00')
+    s.setdefault('lunch_end', '13:00')
+    s.setdefault('apt_duration', '60')
+    s.setdefault('global_opening_date', '')
+    s.setdefault('global_closing_date', '')
+    # Defaults matrícula
+    s.setdefault('mat_work_days', '0,1,2,3,4')
+    s.setdefault('mat_start_time', '08:00')
+    s.setdefault('mat_end_time', '16:00')
+    s.setdefault('mat_lunch_start', '12:00')
+    s.setdefault('mat_lunch_end', '13:00')
+    s.setdefault('mat_apt_duration', '30')
+    s.setdefault('mat_primaria_opening', '')
+    s.setdefault('mat_primaria_closing', '')
+    s.setdefault('mat_secundaria_opening', '')
+    s.setdefault('mat_secundaria_closing', '')
     return render_template('admin_settings.html', settings=s)
 
 @app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
@@ -710,7 +730,7 @@ def matriculas():
     keywords = {
         'Primaria': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to'],
         '2do Ciclo': ['2do ciclo', '7mo', '8vo', '9no', '7vo', '8vo', '9no'],
-        '3er Ciclo': ['3er ciclo', '10mo', '11vo', '12vo', '10vo', '11vo', '12vo']
+        '3er Ciclo': ['3er ciclo', '10mo', '11vo', , '10vo', '11vo', ]
     }
 
     for d in dates_list:
@@ -813,61 +833,48 @@ def matricula_schedule(cycle, name, cedula, phone):
         return "Ciclo no válido", 404
     info = MATRICULA_CYCLES[cycle]
 
-    # Obtener configuración global de horarios
-    global_settings_data = sb_get('settings', 'select=*')
-    global_s = global_settings_data[0] if (isinstance(global_settings_data, list) and len(global_settings_data) > 0) else {}
+    # Configuración específica de matrícula desde settings
+    settings_data = sb_get('settings', 'select=*')
+    gs = settings_data[0] if (isinstance(settings_data, list) and len(settings_data) > 0) else {}
 
     s = {
-        'work_days': global_s.get('work_days') or '0,1,2,3,4',
-        'start_time': global_s.get('start_time') or '08:00',
-        'end_time': global_s.get('end_time') or '16:00',
-        'lunch_start': global_s.get('lunch_start') or '12:00',
-        'lunch_end': global_s.get('lunch_end') or '13:00',
-        'apt_duration': global_s.get('apt_duration') or '60'
+        'work_days': gs.get('mat_work_days') or gs.get('work_days') or '0,1,2,3,4',
+        'start_time': gs.get('mat_start_time') or gs.get('start_time') or '08:00',
+        'end_time': gs.get('mat_end_time') or gs.get('end_time') or '16:00',
+        'lunch_start': gs.get('mat_lunch_start') or gs.get('lunch_start') or '12:00',
+        'lunch_end': gs.get('mat_lunch_end') or gs.get('lunch_end') or '13:00',
+        'apt_duration': gs.get('mat_apt_duration') or '30'
     }
 
     now_cr = datetime.now(CR_TZ)
     today = now_cr.date()
 
-    # Fechas de apertura/cierre desde enrollment_dates según ciclo
-    dates_data = sb_get('enrollment_dates', 'select=*&order=level.asc')
-    dates_list = dates_data if isinstance(dates_data, list) else []
+    # Fechas de apertura/cierre según ciclo (campos específicos)
+    opening_key = 'mat_primaria_opening' if cycle == 'primaria' else 'mat_secundaria_opening'
+    closing_key = 'mat_primaria_closing' if cycle == 'primaria' else 'mat_secundaria_closing'
+    opening_val = gs.get(opening_key) or None
+    closing_val = gs.get(closing_key) or None
 
-    PRIMARIA_KEYS = ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2ro', '3ro']
-    SECUNDARIA_KEYS = ['secundaria', '2do ciclo', '3er ciclo', '7mo', '8vo', '9no', '10mo', '11vo', '12vo']
-    filter_keys = PRIMARIA_KEYS if cycle == 'primaria' else SECUNDARIA_KEYS
-
-    relevant_dates = [d for d in dates_list if any(k in str(d.get('level', '')).lower() for k in filter_keys)]
+    # Sin fechas configuradas → no hay citas disponibles
+    matricula_configured = bool(opening_val or closing_val)
 
     effective_start_date = today
     effective_end_date = None
 
-    for d in relevant_dates:
+    if opening_val:
         try:
-            sd = datetime.strptime(d['start_date'], '%Y-%m-%d').date()
-            effective_start_date = max(effective_start_date, sd)
+            effective_start_date = max(today, datetime.strptime(opening_val, '%Y-%m-%d').date())
         except Exception:
             pass
+    if closing_val:
         try:
-            ed = datetime.strptime(d['end_date'], '%Y-%m-%d').date()
-            if effective_end_date is None or ed > effective_end_date:
-                effective_end_date = ed
+            effective_end_date = datetime.strptime(closing_val, '%Y-%m-%d').date()
         except Exception:
             pass
 
-    # También considerar fechas globales
-    if global_s.get('global_opening_date'):
-        try:
-            effective_start_date = max(effective_start_date, datetime.strptime(global_s['global_opening_date'], '%Y-%m-%d').date())
-        except Exception:
-            pass
-    if global_s.get('global_closing_date'):
-        try:
-            g_close = datetime.strptime(global_s['global_closing_date'], '%Y-%m-%d').date()
-            if effective_end_date is None or g_close < effective_end_date:
-                effective_end_date = g_close
-        except Exception:
-            pass
+    # Si no hay configuración, forzar sin slots
+    if not matricula_configured:
+        effective_end_date = today - timedelta(days=1)
 
     # Generar slots disponibles
     work_days = [int(d) for d in s['work_days'].split(',')]
@@ -925,19 +932,19 @@ def matricula_schedule(cycle, name, cedula, phone):
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
-            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
 
         try:
             selected_dt = datetime.combine(datetime.strptime(apt_date, '%Y-%m-%d').date(), time(int(apt_time.split(':')[0]), int(apt_time.split(':')[1])), tzinfo=CR_TZ)
             if selected_dt <= now_cr:
                 flash('No puede programar una cita en el pasado.', 'danger')
-                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
             if not any(s2['date'] == apt_date and s2['time'] == apt_time for s2 in available_slots):
                 flash('Lo sentimos, ese horario ya no está disponible.', 'danger')
-                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
         except Exception:
             flash('Error al validar la fecha seleccionada.', 'danger')
-            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
 
         apt_data = sb_post('matricula_appointments', {
             'student_name': name,
@@ -953,7 +960,7 @@ def matricula_schedule(cycle, name, cedula, phone):
             return redirect(url_for('matricula_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
 
-    return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+    return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
 
 
 @app.route('/matricula/receipt/<int:apt_id>')
