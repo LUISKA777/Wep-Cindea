@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Cita de Matrícula {{ info.label }} - CINDEA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header text-center py-3">
+                <i class="bi {{ info.icon }} me-2 text-{{ info.color }}"></i>
+                <h4 class="mb-0 d-inline fw-bold">Cita de Matrícula — {{ info.label }}</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert border text-center mb-4" style="background: rgba(6,182,212,0.1);">
+                    <p class="mb-0">
+                        <strong class="text-primary">{{ name }}</strong>
+                        (Cédula: {{ cedula }}, Tel: {{ phone }})<br>
+                        Selecciona el horario para tu cita de matrícula de <strong class="text-primary">{{ info.label }}</strong>.
+                    </p>
+                </div>
+
+                {% if dates %}
+                <form method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Selecciona la Fecha</label>
+                            <select class="form-select form-select-lg" name="date" id="dateSelect" required>
+                                <option value="" selected disabled>Elija una fecha...</option>
+                                {% for d in dates %}
+                                    <option value="{{ d.value }}">{{ d.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Selecciona la Hora</label>
+                            <select class="form-select form-select-lg" name="time" id="timeSelect" required>
+                                <option value="" selected disabled>Primero elija la fecha...</option>
+                                {% for t in times %}
+                                    <option value="{{ t }}">{{ t }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                            Confirmar Cita <i class="bi bi-calendar-check ms-2"></i>
+                        </button>
+                        <a href="{{ url_for('matricula_enroll', cycle=cycle) }}" class="btn btn-link text-muted text-center">Volver</a>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-calendar-x fs-1 mb-3 d-block"></i>
+                    <p class="mb-0 fw-bold">No hay horarios disponibles en este momento.</p>
+                    <p class="small mt-2">Es posible que el periodo de matrícula no haya iniciado o ya haya finalizado.</p>
+                    <a href="{{ url_for('matriculas') }}" class="btn btn-outline-primary mt-3">Ver fechas de matrícula</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const takenSlots = {{ taken | tojson }};
+    const dateSelect = document.getElementById('dateSelect');
+    const timeSelect = document.getElementById('timeSelect');
+
+    function updateTimes() {
+        if (!dateSelect || !timeSelect) return;
+        const selectedDate = dateSelect.value;
+        Array.from(timeSelect.options).forEach(opt => {
+            if (opt.value) opt.disabled = false;
+        });
+        if (!selectedDate) return;
+        takenSlots.forEach(([date, time]) => {
+            if (date === selectedDate) {
+                const opt = Array.from(timeSelect.options).find(o => o.value === time);
+                if (opt) opt.disabled = true;
+            }
+        });
+        const selected = Array.from(timeSelect.selectedOptions)[0];
+        if (selected && selected.disabled) timeSelect.value = "";
+    }
+
+    if (dateSelect) dateSelect.addEventListener('change', updateTimes);
+    updateTimes();
+</script>
+{% endblock %}

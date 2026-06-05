@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Citas de Matrícula - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary">Citas de Matrícula</h2>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Panel
+    </a>
+</div>
+
+<div class="card shadow border-primary">
+    <div class="card-header fw-bold py-3 bg-primary text-white">
+        <i class="bi bi-calendar-check me-2"></i>Citas Programadas (Primaria / Secundaria)
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead>
+                    <tr class="table-light">
+                        <th class="ps-4">Estudiante</th>
+                        <th>Cédula</th>
+                        <th>Teléfono</th>
+                        <th class="text-center">Ciclo</th>
+                        <th class="text-center">Fecha y Hora</th>
+                        <th class="text-end pe-4">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for apt in appointments %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ apt.student_name }}</td>
+                        <td>{{ apt.student_cedula }}</td>
+                        <td>{{ apt.student_phone }}</td>
+                        <td class="text-center">
+                            {% if apt.cycle == 'primaria' %}
+                                <span class="badge bg-warning text-dark">Primaria</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">Secundaria</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="fw-bold">{{ apt.appointment_date }}</div>
+                            <div class="small text-muted">{{ apt.appointment_time }}</div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <span class="text-muted small me-2">{{ apt.created_at }}</span>
+                            <a href="{{ url_for('delete_matricula_cita', id=apt.id) }}"
+                               class="btn btn-sm btn-outline-secondary"
+                               onclick="return confirm('¿Marcar cita como procesada/eliminada?')">
+                                <i class="bi bi-check-lg"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No hay citas de matrícula programadas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

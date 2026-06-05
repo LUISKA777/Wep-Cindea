@@ -132,8 +132,7 @@ def index():
 
 @app.route('/posts')
 def posts():
-    # Solo mostrar posts que estén marcados como publicados
-    res = sb_get('posts', 'select=*&published=eq.true&order=created_at.desc')
+    res = sb_get('posts', 'select=*&order=created_at.desc')
     if isinstance(res, dict) and 'error' in res:
         return f"Error de Supabase ({res['error']}): {res['text']}", 500
     if not isinstance(res, list):
@@ -650,7 +649,7 @@ def add_post():
         content = request.form.get('content')
         published = 'true' if request.form.get('published') else 'false'
         if title and content:
-            res = sb_post('posts', {'title': title, 'content': content, 'published': published})
+            res = sb_post('posts', {'title': title, 'content': content})
             if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
                 flash('Post agregado exitosamente.', 'success')
             else:
@@ -770,6 +769,229 @@ def delete_enrollment_date(id):
     else:
         flash(f'Error al eliminar fecha: {r.status_code}', 'danger')
     return redirect(url_for('admin_matriculas'))
+
+
+
+# ─── Matrícula con cita (Primaria / Secundaria) ─────────────────────────────
+
+MATRICULA_CYCLES = {
+    'primaria': {
+        'label': 'Primaria',
+        'icon': 'bi-book',
+        'color': 'warning',
+        'description': 'Matrícula para estudiantes de Educación Primaria (1° a 6° grado).'
+    },
+    'secundaria': {
+        'label': 'Secundaria',
+        'icon': 'bi-mortarboard',
+        'color': 'info',
+        'description': 'Matrícula para estudiantes de Educación Secundaria (7° a 12° año).'
+    }
+}
+
+@app.route('/matricula/<cycle>', methods=['GET', 'POST'])
+def matricula_enroll(cycle):
+    if cycle not in MATRICULA_CYCLES:
+        return "Ciclo no válido", 404
+    info = MATRICULA_CYCLES[cycle]
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        cedula = request.form.get('cedula')
+        phone = request.form.get('phone')
+        if not name or not cedula or not phone:
+            flash('Por favor complete todos los campos.', 'warning')
+            return render_template('matricula_enroll.html', cycle=cycle, info=info)
+        return redirect(url_for('matricula_schedule', cycle=cycle, name=name, cedula=cedula, phone=phone))
+
+    return render_template('matricula_enroll.html', cycle=cycle, info=info)
+
+
+@app.route('/matricula/<cycle>/cita/<name>/<cedula>/<phone>', methods=['GET', 'POST'])
+def matricula_schedule(cycle, name, cedula, phone):
+    if cycle not in MATRICULA_CYCLES:
+        return "Ciclo no válido", 404
+    info = MATRICULA_CYCLES[cycle]
+
+    # Obtener configuración global de horarios
+    global_settings_data = sb_get('settings', 'select=*')
+    global_s = global_settings_data[0] if (isinstance(global_settings_data, list) and len(global_settings_data) > 0) else {}
+
+    s = {
+        'work_days': global_s.get('work_days') or '0,1,2,3,4',
+        'start_time': global_s.get('start_time') or '08:00',
+        'end_time': global_s.get('end_time') or '16:00',
+        'lunch_start': global_s.get('lunch_start') or '12:00',
+        'lunch_end': global_s.get('lunch_end') or '13:00',
+        'apt_duration': global_s.get('apt_duration') or '60'
+    }
+
+    now_cr = datetime.now(CR_TZ)
+    today = now_cr.date()
+
+    # Fechas de apertura/cierre desde enrollment_dates según ciclo
+    dates_data = sb_get('enrollment_dates', 'select=*&order=level.asc')
+    dates_list = dates_data if isinstance(dates_data, list) else []
+
+    PRIMARIA_KEYS = ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2ro', '3ro']
+    SECUNDARIA_KEYS = ['secundaria', '2do ciclo', '3er ciclo', '7mo', '8vo', '9no', '10mo', '11vo', '12vo']
+    filter_keys = PRIMARIA_KEYS if cycle == 'primaria' else SECUNDARIA_KEYS
+
+    relevant_dates = [d for d in dates_list if any(k in str(d.get('level', '')).lower() for k in filter_keys)]
+
+    effective_start_date = today
+    effective_end_date = None
+
+    for d in relevant_dates:
+        try:
+            sd = datetime.strptime(d['start_date'], '%Y-%m-%d').date()
+            effective_start_date = max(effective_start_date, sd)
+        except Exception:
+            pass
+        try:
+            ed = datetime.strptime(d['end_date'], '%Y-%m-%d').date()
+            if effective_end_date is None or ed > effective_end_date:
+                effective_end_date = ed
+        except Exception:
+            pass
+
+    # También considerar fechas globales
+    if global_s.get('global_opening_date'):
+        try:
+            effective_start_date = max(effective_start_date, datetime.strptime(global_s['global_opening_date'], '%Y-%m-%d').date())
+        except Exception:
+            pass
+    if global_s.get('global_closing_date'):
+        try:
+            g_close = datetime.strptime(global_s['global_closing_date'], '%Y-%m-%d').date()
+            if effective_end_date is None or g_close < effective_end_date:
+                effective_end_date = g_close
+        except Exception:
+            pass
+
+    # Generar slots disponibles
+    work_days = [int(d) for d in s['work_days'].split(',')]
+    start_h, start_m = map(int, s['start_time'].split(':'))
+    end_h, end_m = map(int, s['end_time'].split(':'))
+    lunch_start_h, lunch_start_m = map(int, s['lunch_start'].split(':'))
+    lunch_end_h, lunch_end_m = map(int, s['lunch_end'].split(':'))
+    duration = int(s['apt_duration'])
+
+    start_total_min = start_h * 60 + start_m
+    end_total_min = end_h * 60 + end_m
+    lunch_start_total = lunch_start_h * 60 + lunch_start_m
+    lunch_end_total = lunch_end_h * 60 + lunch_end_m
+
+    all_possible_slots = []
+    for i in range(60):
+        d = effective_start_date + timedelta(days=i)
+        if effective_end_date and d > effective_end_date:
+            break
+        if d.weekday() in work_days:
+            current_total_min = start_total_min
+            while current_total_min + duration <= end_total_min:
+                slot_end = current_total_min + duration
+                if not (slot_end <= lunch_start_total or current_total_min >= lunch_end_total):
+                    current_total_min = lunch_end_total
+                    continue
+                h, m = divmod(current_total_min, 60)
+                time_str = f"{h:02d}:{m:02d}"
+                slot_datetime = datetime.combine(d, time(h, m), tzinfo=CR_TZ)
+                if slot_datetime > now_cr:
+                    all_possible_slots.append({'date': d.isoformat(), 'time': time_str})
+                current_total_min += duration
+
+    # Filtrar ocupados (tabla matricula_appointments)
+    occupied = sb_get('matricula_appointments', f'cycle=eq.{cycle}&select=appointment_date,appointment_time')
+    taken_set = set()
+    if isinstance(occupied, list):
+        for slot in occupied:
+            d_val = slot['appointment_date'].split('T')[0] if 'T' in slot['appointment_date'] else slot['appointment_date']
+            taken_set.add((d_val, slot['appointment_time']))
+
+    available_slots = [s2 for s2 in all_possible_slots if (s2['date'], s2['time']) not in taken_set]
+
+    unique_dates = sorted(list(set(s2['date'] for s2 in available_slots)))
+    formatted_dates = [{'value': d, 'label': format_date_spanish(d)} for d in unique_dates]
+    available_times = sorted(list(set(s2['time'] for s2 in available_slots)))
+
+    fake_taken = []
+    for s2 in all_possible_slots:
+        if (s2['date'], s2['time']) in taken_set:
+            fake_taken.append([s2['date'], s2['time']])
+
+    if request.method == 'POST':
+        apt_date = request.form.get('date')
+        apt_time = request.form.get('time')
+        if not apt_date or not apt_time:
+            flash('Por favor seleccione una fecha y hora.', 'warning')
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+
+        try:
+            selected_dt = datetime.combine(datetime.strptime(apt_date, '%Y-%m-%d').date(), time(int(apt_time.split(':')[0]), int(apt_time.split(':')[1])), tzinfo=CR_TZ)
+            if selected_dt <= now_cr:
+                flash('No puede programar una cita en el pasado.', 'danger')
+                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            if not any(s2['date'] == apt_date and s2['time'] == apt_time for s2 in available_slots):
+                flash('Lo sentimos, ese horario ya no está disponible.', 'danger')
+                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+        except Exception:
+            flash('Error al validar la fecha seleccionada.', 'danger')
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+
+        apt_data = sb_post('matricula_appointments', {
+            'student_name': name,
+            'student_cedula': cedula,
+            'student_phone': phone,
+            'cycle': cycle,
+            'appointment_date': apt_date,
+            'appointment_time': apt_time
+        })
+        flash('¡Cita de matrícula programada con éxito!', 'success')
+        apt_id = apt_data.get('id') if isinstance(apt_data, dict) else (apt_data[0].get('id') if isinstance(apt_data, list) and apt_data else None)
+        if apt_id:
+            return redirect(url_for('matricula_receipt', apt_id=apt_id))
+        return redirect(url_for('index'))
+
+    return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+
+
+@app.route('/matricula/receipt/<int:apt_id>')
+def matricula_receipt(apt_id):
+    apt = sb_get('matricula_appointments', f'id=eq.{apt_id}&select=*')
+    if not apt or len(apt) == 0:
+        return "Cita no encontrada", 404
+    apt_details = apt[0]
+    if 'appointment_date' in apt_details:
+        apt_details['appointment_date'] = format_date_spanish(apt_details['appointment_date'].split('T')[0])
+    cycle = apt_details.get('cycle', 'primaria')
+    info = MATRICULA_CYCLES.get(cycle, MATRICULA_CYCLES['primaria'])
+    return render_template('matricula_receipt.html', appointment=apt_details, info=info)
+
+
+@app.route('/admin/matricula-citas')
+@login_required
+def admin_matricula_citas():
+    appointments = sb_get('matricula_appointments', 'select=*&order=created_at.desc')
+    if not isinstance(appointments, list):
+        appointments = []
+    for a in appointments:
+        if 'appointment_date' in a:
+            a['appointment_date'] = format_date_spanish(a['appointment_date'].split('T')[0])
+        if 'created_at' in a:
+            a['created_at'] = a['created_at'].split('T')[0] + ' ' + a['created_at'].split('T')[1][:5] if 'T' in a['created_at'] else a['created_at']
+    return render_template('admin_matricula_citas.html', appointments=appointments)
+
+
+@app.route('/admin/matricula-citas/delete/<int:id>')
+@login_required
+def delete_matricula_cita(id):
+    r = sb_delete('matricula_appointments', 'id', id)
+    if r.status_code in [200, 204]:
+        flash('Cita de matrícula eliminada.', 'success')
+    else:
+        flash(f'Error al eliminar: {r.status_code}', 'danger')
+    return redirect(url_for('admin_matricula_citas'))
 
 
 handler = app
