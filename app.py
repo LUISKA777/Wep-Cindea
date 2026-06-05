@@ -1023,8 +1023,18 @@ def matricula_schedule(cycle, name, cedula, phone):
     # Los cupos controlan cuántas reservas totales se permiten (chequeado en matricula_enroll).
     # Aquí mostramos todos los slots libres dentro del periodo — no cortamos por cupos.
 
-    unique_dates = sorted(list(set(s2['date'] for s2 in available_slots)))
+    # Construir mapa fecha → lista de horas disponibles (para el JS del template)
+    slots_by_date = {}
+    for s2 in available_slots:
+        slots_by_date.setdefault(s2['date'], [])
+        if s2['time'] not in slots_by_date[s2['date']]:
+            slots_by_date[s2['date']].append(s2['time'])
+    for d in slots_by_date:
+        slots_by_date[d].sort()
+
+    unique_dates = sorted(slots_by_date.keys())
     formatted_dates = [{'value': d, 'label': format_date_spanish(d)} for d in unique_dates]
+    # available_times: todas las horas únicas (usadas como base en el select, el JS filtra por fecha)
     available_times = sorted(list(set(s2['time'] for s2 in available_slots)))
 
     fake_taken = []
@@ -1037,19 +1047,19 @@ def matricula_schedule(cycle, name, cedula, phone):
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
-            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
 
         try:
             selected_dt = datetime.combine(datetime.strptime(apt_date, '%Y-%m-%d').date(), time(int(apt_time.split(':')[0]), int(apt_time.split(':')[1])), tzinfo=CR_TZ)
             if selected_dt <= now_cr:
                 flash('No puede programar una cita en el pasado.', 'danger')
-                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
+                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
             if not any(s2['date'] == apt_date and s2['time'] == apt_time for s2 in available_slots):
                 flash('Lo sentimos, ese horario ya no está disponible.', 'danger')
-                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
+                return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
         except Exception:
             flash('Error al validar la fecha seleccionada.', 'danger')
-            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
 
         apt_data = sb_post('matricula_appointments', {
             'student_name': name,
@@ -1065,7 +1075,7 @@ def matricula_schedule(cycle, name, cedula, phone):
             return redirect(url_for('matricula_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
 
-    return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, matricula_configured=matricula_configured)
+    return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
 
 
 @app.route('/matricula/receipt/<int:apt_id>')

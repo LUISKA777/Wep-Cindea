@@ -40,16 +40,13 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Selecciona la Hora</label>
-                            <select class="form-select form-select-lg" name="time" id="timeSelect" required>
+                            <select class="form-select form-select-lg" name="time" id="timeSelect" required disabled>
                                 <option value="" selected disabled>Primero elija la fecha...</option>
-                                {% for t in times %}
-                                    <option value="{{ t }}">{{ t }}</option>
-                                {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="d-grid gap-2 mt-5">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold" id="submitBtn" disabled>
                             Confirmar Cita <i class="bi bi-calendar-check ms-2"></i>
                         </button>
                         <a href="{{ url_for('matricula_enroll', cycle=cycle) }}" class="btn btn-link text-muted text-center">Volver</a>
@@ -70,28 +67,41 @@
 </div>
 
 <script>
-    const takenSlots = {{ taken | tojson }};
+    // Mapa exacto: fecha → horas disponibles para ESA fecha
+    const slotsByDate = {{ slots_by_date | tojson }};
     const dateSelect = document.getElementById('dateSelect');
     const timeSelect = document.getElementById('timeSelect');
+    const submitBtn  = document.getElementById('submitBtn');
 
     function updateTimes() {
         if (!dateSelect || !timeSelect) return;
         const selectedDate = dateSelect.value;
-        Array.from(timeSelect.options).forEach(opt => {
-            if (opt.value) opt.disabled = false;
+
+        // Limpiar opciones anteriores
+        timeSelect.innerHTML = '<option value="" selected disabled>Elija una hora...</option>';
+        timeSelect.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
+
+        if (!selectedDate || !slotsByDate[selectedDate]) return;
+
+        const hours = slotsByDate[selectedDate];
+        hours.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            timeSelect.appendChild(opt);
         });
-        if (!selectedDate) return;
-        takenSlots.forEach(([date, time]) => {
-            if (date === selectedDate) {
-                const opt = Array.from(timeSelect.options).find(o => o.value === time);
-                if (opt) opt.disabled = true;
-            }
-        });
-        const selected = Array.from(timeSelect.selectedOptions)[0];
-        if (selected && selected.disabled) timeSelect.value = "";
+
+        timeSelect.disabled = false;
+    }
+
+    function updateSubmit() {
+        if (submitBtn) {
+            submitBtn.disabled = !(dateSelect.value && timeSelect.value);
+        }
     }
 
     if (dateSelect) dateSelect.addEventListener('change', updateTimes);
-    updateTimes();
+    if (timeSelect) timeSelect.addEventListener('change', updateSubmit);
 </script>
 {% endblock %}
