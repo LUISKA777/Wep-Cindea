@@ -892,7 +892,16 @@ def _get_cycle_availability(cycle):
     max_cupos = int(cupos_val) if cupos_val and str(cupos_val).isdigit() else None
 
     occupied = sb_get('matricula_appointments', f'cycle=eq.{cycle}&select=appointment_date,appointment_time')
-    booked_count = len(occupied) if isinstance(occupied, list) else 0
+    if isinstance(occupied, list):
+        # Filtrar citas para contar solo las del periodo actual (evitar que citas de años anteriores consuman cupos)
+        filtered = occupied
+        if opening_val:
+            filtered = [a for a in filtered if a['appointment_date'] >= opening_val]
+        if closing_val:
+            filtered = [a for a in filtered if a['appointment_date'] <= closing_val]
+        booked_count = len(filtered)
+    else:
+        booked_count = 0
 
     if max_cupos is not None:
         remaining = max(0, max_cupos - booked_count)
