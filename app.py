@@ -877,17 +877,51 @@ MATRICULA_CYCLES = {
 }
 
 def _get_cycle_availability(cycle):
-    """Retorna (max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val)"""
+    """Retorna (max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs)"""
     settings_data = sb_get('settings', 'select=*')
     gs = settings_data[0] if (isinstance(settings_data, list) and len(settings_data) > 0) else {}
+
     cycle_key_map = {
         'primaria':      ('mat_primaria_opening',      'mat_primaria_closing',      'mat_primaria_cupos'),
         'segundo_nivel': ('mat_segundo_nivel_opening', 'mat_segundo_nivel_closing', 'mat_segundo_nivel_cupos'),
         'tercer_nivel':  ('mat_tercer_nivel_opening',  'mat_tercer_nivel_closing',  'mat_tercer_nivel_cupos'),
     }
     opening_key, closing_key, cupos_key = cycle_key_map.get(cycle, ('mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos'))
-    opening_val = gs.get(opening_key) or None
-    closing_val = gs.get(closing_key) or None
+
+    # 1. Intentar obtener fechas desde la tabla enrollment_dates (prioridad)
+    opening_val, closing_val = None, None
+
+    # Mapeo de ciclos a palabras clave para buscar en enrollment_dates
+    cycle_keywords = {
+        'primaria': ['primaria'],
+        'segundo_nivel': ['segundo', '2do ciclo', '7mo', '8vo', '9no'],
+        'tercer_nivel': ['tercer', '3er ciclo', '10mo', '11vo']
+    }
+
+    keywords = cycle_keywords.get(cycle, [])
+    if keywords:
+        # Buscamos cualquier registro que contenga alguna de las palabras clave en el nivel
+        # Nota: Supabase no soporta OR complejo en un solo filtro fácilmente vía URL,
+        # así que obtenemos todos y filtramos en Python.
+        enroll_dates = sb_get('enrollment_dates', 'select=level,start_date,end_date')
+        if isinstance(enroll_dates, list):
+            for ed in enroll_dates:
+                lvl = str(ed.get('level', '')).lower()
+                if any(k in lvl for k in keywords):
+                    opening_val = ed.get('start_date')
+                    closing_val = ed.get('end_date')
+                    break
+
+    # 2. Si no se encontraron fechas en enrollment_dates, usar las de settings
+    if not opening_val and not closing_val:
+        opening_val = gs.get(opening_key) or None
+        closing_val = gs.get(closing_key) or None
+    else:
+        # Si encontramos fechas en enrollment_dates, pero settings también tiene,
+        # priorizamos enrollment_dates pero mantenemos los valores de settings si alguno era None.
+        # En realidad, si hay registro en enrollment_dates, ese es el periodo oficial.
+        pass
+
     cupos_val = gs.get(cupos_key)
     max_cupos = int(cupos_val) if cupos_val and str(cupos_val).isdigit() else None
 
