@@ -888,10 +888,10 @@ def _get_cycle_availability(cycle):
     }
     opening_key, closing_key, cupos_key = cycle_key_map.get(cycle, ('mat_primaria_opening', 'mat_primaria_closing', 'mat_primaria_cupos'))
 
-    # 1. Intentar obtener fechas desde la tabla enrollment_dates (prioridad)
-    opening_val, closing_val = None, None
+    today_str = datetime.now(CR_TZ).date().isoformat()
 
-    # Mapeo de ciclos a palabras clave para buscar en enrollment_dates
+    # 1. Intentar obtener fechas desde la tabla enrollment_dates
+    opening_val, closing_val = None, None
     cycle_keywords = {
         'primaria': ['primaria'],
         'segundo_nivel': ['segundo', '2do ciclo', '7mo', '8vo', '9no'],
@@ -900,34 +900,33 @@ def _get_cycle_availability(cycle):
 
     keywords = cycle_keywords.get(cycle, [])
     if keywords:
-        # Buscamos cualquier registro que contenga alguna de las palabras clave en el nivel
-        # Nota: Supabase no soporta OR complejo en un solo filtro fácilmente vía URL,
-        # así que obtenemos todos y filtramos en Python.
         enroll_dates = sb_get('enrollment_dates', 'select=level,start_date,end_date')
         if isinstance(enroll_dates, list):
             for ed in enroll_dates:
                 lvl = str(ed.get('level', '')).lower()
                 if any(k in lvl for k in keywords):
-                    opening_val = ed.get('start_date')
-                    closing_val = ed.get('end_date')
-                    break
+                    e_open = ed.get('start_date')
+                    e_close = ed.get('end_date')
+                    # Solo usar si el periodo NO ha terminado totalmente (está activo o es futuro)
+                    if not e_close or e_close >= today_str:
+                        opening_val = e_open
+                        closing_val = e_close
+                        break
 
-    # 2. Si no se encontraron fechas en enrollment_dates, usar las de settings
+    # 2. Si no se encontraron fechas activas en enrollment_dates, usar las de settings
     if not opening_val and not closing_val:
         opening_val = gs.get(opening_key) or None
         closing_val = gs.get(closing_key) or None
-    else:
-        # Si encontramos fechas en enrollment_dates, pero settings también tiene,
-        # priorizamos enrollment_dates pero mantenemos los valores de settings si alguno era None.
-        # En realidad, si hay registro en enrollment_dates, ese es el periodo oficial.
-        pass
+        # Validar también que las de settings no estén vencidas
+        if closing_val and closing_val < today_str:
+            if not opening_val or opening_val <= today_str:
+                opening_val, closing_val = None, None
 
     cupos_val = gs.get(cupos_key)
     max_cupos = int(cupos_val) if cupos_val and str(cupos_val).isdigit() else None
 
     occupied = sb_get('matricula_appointments', f'cycle=eq.{cycle}&select=appointment_date,appointment_time')
     if isinstance(occupied, list):
-        # Filtrar citas para contar solo las del periodo actual (evitar que citas de años anteriores consuman cupos)
         filtered = occupied
         if opening_val:
             filtered = [a for a in filtered if a['appointment_date'] >= opening_val]
@@ -940,7 +939,7 @@ def _get_cycle_availability(cycle):
     if max_cupos is not None:
         remaining = max(0, max_cupos - booked_count)
     else:
-        remaining = None  # sin límite
+        remaining = None
 
     matricula_configured = bool(opening_val or closing_val)
     return max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs
