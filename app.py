@@ -598,6 +598,7 @@ def admin_settings():
             'mat_primaria_start_time': request.form.get('mat_primaria_start_time') or None,
             'mat_primaria_end_time': request.form.get('mat_primaria_end_time') or None,
             'mat_primaria_apt_duration': request.form.get('mat_primaria_apt_duration') or None,
+            'mat_primaria_reqs': request.form.get('mat_primaria_reqs') or None,
         }, 'Fechas/cupos Primaria')
 
         # Bloque 4 — fechas, cupos y horarios Segundo Nivel
@@ -609,6 +610,7 @@ def admin_settings():
             'mat_segundo_nivel_start_time': request.form.get('mat_segundo_nivel_start_time') or None,
             'mat_segundo_nivel_end_time': request.form.get('mat_segundo_nivel_end_time') or None,
             'mat_segundo_nivel_apt_duration': request.form.get('mat_segundo_nivel_apt_duration') or None,
+            'mat_segundo_nivel_reqs': request.form.get('mat_segundo_nivel_reqs') or None,
         }, 'Fechas/cupos Segundo Nivel')
 
         # Bloque 5 — fechas, cupos y horarios Tercer Nivel
@@ -620,6 +622,7 @@ def admin_settings():
             'mat_tercer_nivel_start_time': request.form.get('mat_tercer_nivel_start_time') or None,
             'mat_tercer_nivel_end_time': request.form.get('mat_tercer_nivel_end_time') or None,
             'mat_tercer_nivel_apt_duration': request.form.get('mat_tercer_nivel_apt_duration') or None,
+            'mat_tercer_nivel_reqs': request.form.get('mat_tercer_nivel_reqs') or None,
         }, 'Fechas/cupos Tercer Nivel')
 
         if errors:
@@ -656,6 +659,7 @@ def admin_settings():
     s.setdefault('mat_primaria_start_time', '')
     s.setdefault('mat_primaria_end_time', '')
     s.setdefault('mat_primaria_apt_duration', '')
+    s.setdefault('mat_primaria_reqs', '')
     s.setdefault('mat_segundo_nivel_opening', '')
     s.setdefault('mat_segundo_nivel_closing', '')
     s.setdefault('mat_segundo_nivel_cupos', '')
@@ -663,6 +667,7 @@ def admin_settings():
     s.setdefault('mat_segundo_nivel_start_time', '')
     s.setdefault('mat_segundo_nivel_end_time', '')
     s.setdefault('mat_segundo_nivel_apt_duration', '')
+    s.setdefault('mat_segundo_nivel_reqs', '')
     s.setdefault('mat_tercer_nivel_opening', '')
     s.setdefault('mat_tercer_nivel_closing', '')
     s.setdefault('mat_tercer_nivel_cupos', '')
@@ -670,6 +675,7 @@ def admin_settings():
     s.setdefault('mat_tercer_nivel_start_time', '')
     s.setdefault('mat_tercer_nivel_end_time', '')
     s.setdefault('mat_tercer_nivel_apt_duration', '')
+    s.setdefault('mat_tercer_nivel_reqs', '')
     return render_template('admin_settings.html', settings=s)
 
 @app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
@@ -1021,7 +1027,8 @@ def matricula_enroll(cycle):
             flash('No hay cupos disponibles para este nivel en este momento.', 'danger')
             return render_template('matricula_enroll.html', cycle=cycle, info=info,
                                    no_cupos=no_cupos, no_config=no_config,
-                                   remaining=remaining, max_cupos=max_cupos)
+                                   remaining=remaining, max_cupos=max_cupos,
+                                   requirements=gs.get(f'mat_{cycle}_reqs'))
         name = request.form.get('name')
         cedula = request.form.get('cedula')
         phone = request.form.get('phone')
@@ -1029,12 +1036,14 @@ def matricula_enroll(cycle):
             flash('Por favor complete todos los campos.', 'warning')
             return render_template('matricula_enroll.html', cycle=cycle, info=info,
                                    no_cupos=no_cupos, no_config=no_config,
-                                   remaining=remaining, max_cupos=max_cupos)
+                                   remaining=remaining, max_cupos=max_cupos,
+                                   requirements=gs.get(f'mat_{cycle}_reqs'))
         return redirect(url_for('matricula_schedule', cycle=cycle, name=name, cedula=cedula, phone=phone))
 
     return render_template('matricula_enroll.html', cycle=cycle, info=info,
                            no_cupos=no_cupos, no_config=no_config,
-                           remaining=remaining, max_cupos=max_cupos)
+                           remaining=remaining, max_cupos=max_cupos,
+                           requirements=gs.get(f'mat_{cycle}_reqs'))
 
 
 @app.route('/matricula/<cycle>/cita/<name>/<cedula>/<phone>', methods=['GET', 'POST'])
