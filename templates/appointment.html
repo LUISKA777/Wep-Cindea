@@ -5,14 +5,16 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card shadow border-0">
-            <div class="card-header text-center py-3">
-                <h4 class="mb-0">Programar Cita de Matrícula</h4>
+            <div class="card-header text-center py-3" style="background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)); color: white;">
+                <h4 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Programar Cita — Curso</h4>
+                <p class="mb-0 small opacity-75 mt-1">{{ course.name }}</p>
             </div>
             <div class="card-body p-4">
                 <div class="alert border text-center mb-4" style="background: rgba(6, 182, 212, 0.1);">
                     <p class="mb-0"><strong class="text-primary">{{ name }}</strong> (Cédula: {{ cedula }}, Tel: {{ phone }}), por favor selecciona el horario disponible para tu cita de <strong class="text-primary">{{ course.name }}</strong>.</p>
                 </div>
 
+                {% if dates %}
                 <form method="POST">
                     <div class="row g-4">
                         <div class="col-md-6">
@@ -26,11 +28,8 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Selecciona la Hora</label>
-                            <select class="form-select form-select-lg" name="time" id="timeSelect" required>
+                            <select class="form-select form-select-lg" name="time" id="timeSelect" required disabled>
                                 <option value="" selected disabled>Primero elija la fecha...</option>
-                                {% for t in times %}
-                                    <option value="{{ t }}">{{ t }}</option>
-                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -39,46 +38,52 @@
                         <button type="submit" class="btn btn-primary btn-lg fw-bold">Confirmar Cita <i class="bi bi-calendar-check ms-2"></i></button>
                     </div>
                 </form>
+                {% else %}
+                <div class="alert alert-warning text-center py-4">
+                    <i class="bi bi-calendar-x fs-2 mb-2 d-block"></i>
+                    <strong>No hay citas disponibles en este momento.</strong><br>
+                    <span class="small text-muted">No existen horarios abiertos para este curso. Contacte la institución para más información.</span>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const takenSlots = {{ taken | tojson }};
+    // slots_by_date: mapa de fecha → lista de horas disponibles (solo las libres)
+    const slotsByDate = {{ slots_by_date | tojson }};
     const dateSelect = document.getElementById('dateSelect');
     const timeSelect = document.getElementById('timeSelect');
 
     function updateTimes() {
         const selectedDate = dateSelect.value;
-        const allOptions = Array.from(timeSelect.options);
+        // Limpiar opciones anteriores
+        timeSelect.innerHTML = '<option value="" selected disabled>Elija una hora...</option>';
 
-        // Reset all times to enabled
-        allOptions.forEach(opt => {
-            if(opt.value) opt.disabled = false;
-        });
-
-        if (!selectedDate) return;
-
-        // Disable taken slots for the selected date
-        takenSlots.forEach(([date, time]) => {
-            if (date === selectedDate) {
-                const timeOpt = allOptions.find(opt => opt.value === time);
-                if (timeOpt) timeOpt.disabled = true;
-            }
-        });
-
-        // Handle if current selected time became disabled
-        if (timeSelect.value && !Array.from(timeSelect.selectedOptions)[0].disabled) {
-            // keep it
-        } else if (timeSelect.value && Array.from(timeSelect.selectedOptions)[0].disabled) {
-            timeSelect.value = "";
+        if (!selectedDate) {
+            timeSelect.disabled = true;
+            return;
         }
+
+        const availableTimes = slotsByDate[selectedDate] || [];
+
+        if (availableTimes.length === 0) {
+            timeSelect.innerHTML = '<option value="" selected disabled>Sin horarios disponibles</option>';
+            timeSelect.disabled = true;
+            return;
+        }
+
+        availableTimes.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            timeSelect.appendChild(opt);
+        });
+
+        timeSelect.disabled = false;
     }
 
     dateSelect.addEventListener('change', updateTimes);
-
-    // Initial run
-    updateTimes();
 </script>
 {% endblock %}

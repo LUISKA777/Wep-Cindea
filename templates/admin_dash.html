@@ -98,7 +98,12 @@
                             {% for course in courses %}
                             <tr>
                                 <td class="ps-4">
-                                    <div class="fw-bold">{{ course.name }}</div>
+                                    <div class="fw-bold">
+                                        {{ course.name }}
+                                        {% if course.hidden %}
+                                        <span class="badge bg-secondary ms-1" title="Oculto en la web"><i class="bi bi-eye-slash"></i> Oculto</span>
+                                        {% endif %}
+                                    </div>
                                     <div class="small text-muted text-truncate" style="max-width: 300px;">{{ course.description }}</div>
                                 </td>
                                 <td class="text-center">
@@ -110,6 +115,11 @@
                                     <div class="d-flex justify-content-center gap-2">
                                         <a href="{{ url_for('edit_course', id=course.id) }}" class="btn btn-sm btn-outline-primary" title="Editar Curso">
                                             <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{ url_for('toggle_course_visibility', id=course.id) }}"
+                                           class="btn btn-sm {{ 'btn-warning' if not course.hidden else 'btn-outline-success' }}"
+                                           title="{{ 'Ocultar de la web' if not course.hidden else 'Mostrar en la web' }}">
+                                            <i class="bi {{ 'bi-eye-slash' if not course.hidden else 'bi-eye' }}"></i>
                                         </a>
                                         <a href="{{ url_for('delete_course', id=course.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Estás seguro de eliminar este curso?')">
                                             <i class="bi bi-trash"></i>

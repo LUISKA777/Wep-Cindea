@@ -49,3 +49,26 @@ CREATE TABLE IF NOT EXISTS matricula_appointments (
 -- Ese mensaje es del navegador (Safari/Edge bloqueando cookies de terceros).
 -- Para resolverlo en producción, configure su dominio con cookies SameSite=None; Secure
 -- o use un dominio propio en Vercel.
+
+-- ============================================================
+-- NUEVAS COLUMNAS — Ejecutar si se actualizó app.py v2
+-- ============================================================
+
+-- 6. Horarios individuales por nivel de matrícula
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS mat_primaria_work_days TEXT,
+  ADD COLUMN IF NOT EXISTS mat_primaria_start_time TEXT,
+  ADD COLUMN IF NOT EXISTS mat_primaria_end_time TEXT,
+  ADD COLUMN IF NOT EXISTS mat_primaria_apt_duration TEXT,
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_work_days TEXT,
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_start_time TEXT,
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_end_time TEXT,
+  ADD COLUMN IF NOT EXISTS mat_segundo_nivel_apt_duration TEXT,
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_work_days TEXT,
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_start_time TEXT,
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_end_time TEXT,
+  ADD COLUMN IF NOT EXISTS mat_tercer_nivel_apt_duration TEXT;
+
+-- 7. Columna hidden en courses para ocultar de la web sin borrar
+ALTER TABLE courses
+  ADD COLUMN IF NOT EXISTS hidden BOOLEAN DEFAULT FALSE;

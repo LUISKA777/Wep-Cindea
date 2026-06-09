@@ -119,6 +119,29 @@
                         <input type="number" class="form-control" name="mat_primaria_cupos" value="{{ settings.mat_primaria_cupos or '' }}" min="1" placeholder="Sin límite">
                         <div class="form-text">Deje vacío para sin límite de cupos.</div>
                     </div>
+                    <div class="col-12">
+                        <details class="mt-1">
+                            <summary class="small text-muted fw-bold" style="cursor:pointer;">⚙️ Horarios específicos para este nivel (opcional — sobreescribe el horario global)</summary>
+                            <div class="row g-2 mt-2 p-2 border rounded bg-light">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Días Laborales</label>
+                                    <input type="text" class="form-control form-control-sm" name="mat_primaria_work_days" value="{{ settings.mat_primaria_work_days or '' }}" placeholder="Ej: 0,1,2,3,4">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hora Inicio</label>
+                                    <input type="time" class="form-control form-control-sm" name="mat_primaria_start_time" value="{{ settings.mat_primaria_start_time or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hora Fin</label>
+                                    <input type="time" class="form-control form-control-sm" name="mat_primaria_end_time" value="{{ settings.mat_primaria_end_time or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Duración por cita (min)</label>
+                                    <input type="number" class="form-control form-control-sm" name="mat_primaria_apt_duration" value="{{ settings.mat_primaria_apt_duration or '' }}" min="5" placeholder="Usa global si vacío">
+                                </div>
+                            </div>
+                        </details>
+                    </div>
                 </div>
 
                 <hr style="border-color: var(--glass-border);">
@@ -142,6 +165,29 @@
                         <input type="number" class="form-control" name="mat_segundo_nivel_cupos" value="{{ settings.mat_segundo_nivel_cupos or '' }}" min="1" placeholder="Sin límite">
                         <div class="form-text">Deje vacío para sin límite de cupos.</div>
                     </div>
+                    <div class="col-12">
+                        <details class="mt-1">
+                            <summary class="small text-muted fw-bold" style="cursor:pointer;">⚙️ Horarios específicos para este nivel (opcional)</summary>
+                            <div class="row g-2 mt-2 p-2 border rounded bg-light">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Días Laborales</label>
+                                    <input type="text" class="form-control form-control-sm" name="mat_segundo_nivel_work_days" value="{{ settings.mat_segundo_nivel_work_days or '' }}" placeholder="Ej: 0,1,2,3,4">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hora Inicio</label>
+                                    <input type="time" class="form-control form-control-sm" name="mat_segundo_nivel_start_time" value="{{ settings.mat_segundo_nivel_start_time or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hora Fin</label>
+                                    <input type="time" class="form-control form-control-sm" name="mat_segundo_nivel_end_time" value="{{ settings.mat_segundo_nivel_end_time or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Duración por cita (min)</label>
+                                    <input type="number" class="form-control form-control-sm" name="mat_segundo_nivel_apt_duration" value="{{ settings.mat_segundo_nivel_apt_duration or '' }}" min="5" placeholder="Usa global si vacío">
+                                </div>
+                            </div>
+                        </details>
+                    </div>
                 </div>
 
                 <hr style="border-color: var(--glass-border);">
@@ -164,6 +210,29 @@
                         <label class="form-label fw-bold">Cupos Disponibles</label>
                         <input type="number" class="form-control" name="mat_tercer_nivel_cupos" value="{{ settings.mat_tercer_nivel_cupos or '' }}" min="1" placeholder="Sin límite">
                         <div class="form-text">Deje vacío para sin límite de cupos.</div>
+                    </div>
+                    <div class="col-12">
+                        <details class="mt-1">
+                            <summary class="small text-muted fw-bold" style="cursor:pointer;">⚙️ Horarios específicos para este nivel (opcional)</summary>
+                            <div class="row g-2 mt-2 p-2 border rounded bg-light">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Días Laborales</label>
+                                    <input type="text" class="form-control form-control-sm" name="mat_tercer_nivel_work_days" value="{{ settings.mat_tercer_nivel_work_days or '' }}" placeholder="Ej: 0,1,2,3,4">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hora Inicio</label>
+                                    <input type="time" class="form-control form-control-sm" name="mat_tercer_nivel_start_time" value="{{ settings.mat_tercer_nivel_start_time or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hora Fin</label>
+                                    <input type="time" class="form-control form-control-sm" name="mat_tercer_nivel_end_time" value="{{ settings.mat_tercer_nivel_end_time or '' }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Duración por cita (min)</label>
+                                    <input type="number" class="form-control form-control-sm" name="mat_tercer_nivel_apt_duration" value="{{ settings.mat_tercer_nivel_apt_duration or '' }}" min="5" placeholder="Usa global si vacío">
+                                </div>
+                            </div>
+                        </details>
                     </div>
                 </div>
 

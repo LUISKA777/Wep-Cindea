@@ -123,6 +123,9 @@ def index():
 
     today_str = datetime.now(CR_TZ).date().isoformat()
 
+    # Filter out hidden courses for public view
+    courses = [c for c in courses if not c.get('hidden', False)]
+
     for c in courses:
         get_vacancies_left(c)
         # Check if course is closed
@@ -337,6 +340,15 @@ def schedule_appointment(course_id, name, cedula, phone):
     formatted_dates = []
     available_times = []
 
+    # Build slots_by_date: date -> list of available times (for JS filtering)
+    slots_by_date = {}
+    for slot in selected_slots:
+        slots_by_date.setdefault(slot['date'], [])
+        if slot['time'] not in slots_by_date[slot['date']]:
+            slots_by_date[slot['date']].append(slot['time'])
+    for d in slots_by_date:
+        slots_by_date[d].sort()
+
     all_selected_times = sorted(list(set(slot['time'] for slot in selected_slots)))
     available_times = all_selected_times
 
@@ -354,12 +366,17 @@ def schedule_appointment(course_id, name, cedula, phone):
     for t in taken_set:
         fake_taken.append(list(t))
 
+    def _apt_render():
+        return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone,
+                               dates=formatted_dates, times=available_times, taken=fake_taken,
+                               slots_by_date=slots_by_date)
+
     if request.method == 'POST':
         apt_date = request.form.get('date')
         apt_time = request.form.get('time')
         if not apt_date or not apt_time:
             flash('Por favor seleccione una fecha y hora.', 'warning')
-            return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            return _apt_render()
 
         # SERVER-SIDE VALIDATION
         try:
@@ -369,24 +386,24 @@ def schedule_appointment(course_id, name, cedula, phone):
             # 1. Prevent past appointments
             if selected_dt <= now_cr:
                 flash('Lo sentimos, no puede programar una cita en el pasado.', 'danger')
-                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return _apt_render()
 
             # 2. Validate against effective start and end dates
             selected_date_val = selected_dt.date()
             if selected_date_val < effective_start_date:
                 flash('La fecha seleccionada es anterior a la fecha de apertura.', 'danger')
-                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return _apt_render()
             if effective_end_date and selected_date_val > effective_end_date:
                 flash('La fecha seleccionada es posterior a la fecha de cierre.', 'danger')
-                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return _apt_render()
 
             # 3. Verify the slot was actually offered as available
             if not any(slot['date'] == apt_date and slot['time'] == apt_time for slot in selected_slots):
                 flash('Lo sentimos, este horario ya no está disponible o no es válido.', 'danger')
-                return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+                return _apt_render()
         except Exception as e:
             flash('Error al validar la fecha y hora seleccionadas.', 'danger')
-            return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+            return _apt_render()
 
         apt_data = sb_post('appointments', {
             'student_name': name,
@@ -405,7 +422,7 @@ def schedule_appointment(course_id, name, cedula, phone):
             return redirect(url_for('appointment_receipt', apt_id=apt_id))
         return redirect(url_for('index'))
 
-    return render_template('appointment.html', course=course, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken)
+    return _apt_render()
 
 @app.route('/appointment/receipt/<int:apt_id>')
 def appointment_receipt(apt_id):
@@ -572,25 +589,37 @@ def admin_settings():
             'mat_apt_duration': request.form.get('mat_apt_duration', '30'),
         }, 'Horario matrícula')
 
-        # Bloque 3 — fechas y cupos Primer Nivel (Primaria)
+        # Bloque 3 — fechas, cupos y horarios Primer Nivel (Primaria)
         _save({
             'mat_primaria_opening': request.form.get('mat_primaria_opening') or None,
             'mat_primaria_closing': request.form.get('mat_primaria_closing') or None,
             'mat_primaria_cupos':   request.form.get('mat_primaria_cupos') or None,
+            'mat_primaria_work_days': request.form.get('mat_primaria_work_days') or None,
+            'mat_primaria_start_time': request.form.get('mat_primaria_start_time') or None,
+            'mat_primaria_end_time': request.form.get('mat_primaria_end_time') or None,
+            'mat_primaria_apt_duration': request.form.get('mat_primaria_apt_duration') or None,
         }, 'Fechas/cupos Primaria')
 
-        # Bloque 4 — fechas y cupos Segundo Nivel
+        # Bloque 4 — fechas, cupos y horarios Segundo Nivel
         _save({
             'mat_segundo_nivel_opening': request.form.get('mat_segundo_nivel_opening') or None,
             'mat_segundo_nivel_closing': request.form.get('mat_segundo_nivel_closing') or None,
             'mat_segundo_nivel_cupos':   request.form.get('mat_segundo_nivel_cupos') or None,
+            'mat_segundo_nivel_work_days': request.form.get('mat_segundo_nivel_work_days') or None,
+            'mat_segundo_nivel_start_time': request.form.get('mat_segundo_nivel_start_time') or None,
+            'mat_segundo_nivel_end_time': request.form.get('mat_segundo_nivel_end_time') or None,
+            'mat_segundo_nivel_apt_duration': request.form.get('mat_segundo_nivel_apt_duration') or None,
         }, 'Fechas/cupos Segundo Nivel')
 
-        # Bloque 5 — fechas y cupos Tercer Nivel
+        # Bloque 5 — fechas, cupos y horarios Tercer Nivel
         _save({
             'mat_tercer_nivel_opening': request.form.get('mat_tercer_nivel_opening') or None,
             'mat_tercer_nivel_closing': request.form.get('mat_tercer_nivel_closing') or None,
             'mat_tercer_nivel_cupos':   request.form.get('mat_tercer_nivel_cupos') or None,
+            'mat_tercer_nivel_work_days': request.form.get('mat_tercer_nivel_work_days') or None,
+            'mat_tercer_nivel_start_time': request.form.get('mat_tercer_nivel_start_time') or None,
+            'mat_tercer_nivel_end_time': request.form.get('mat_tercer_nivel_end_time') or None,
+            'mat_tercer_nivel_apt_duration': request.form.get('mat_tercer_nivel_apt_duration') or None,
         }, 'Fechas/cupos Tercer Nivel')
 
         if errors:
@@ -623,12 +652,24 @@ def admin_settings():
     s.setdefault('mat_primaria_opening', '')
     s.setdefault('mat_primaria_closing', '')
     s.setdefault('mat_primaria_cupos', '')
+    s.setdefault('mat_primaria_work_days', '')
+    s.setdefault('mat_primaria_start_time', '')
+    s.setdefault('mat_primaria_end_time', '')
+    s.setdefault('mat_primaria_apt_duration', '')
     s.setdefault('mat_segundo_nivel_opening', '')
     s.setdefault('mat_segundo_nivel_closing', '')
     s.setdefault('mat_segundo_nivel_cupos', '')
+    s.setdefault('mat_segundo_nivel_work_days', '')
+    s.setdefault('mat_segundo_nivel_start_time', '')
+    s.setdefault('mat_segundo_nivel_end_time', '')
+    s.setdefault('mat_segundo_nivel_apt_duration', '')
     s.setdefault('mat_tercer_nivel_opening', '')
     s.setdefault('mat_tercer_nivel_closing', '')
     s.setdefault('mat_tercer_nivel_cupos', '')
+    s.setdefault('mat_tercer_nivel_work_days', '')
+    s.setdefault('mat_tercer_nivel_start_time', '')
+    s.setdefault('mat_tercer_nivel_end_time', '')
+    s.setdefault('mat_tercer_nivel_apt_duration', '')
     return render_template('admin_settings.html', settings=s)
 
 @app.route('/admin/course/edit/<int:id>', methods=['GET', 'POST'])
@@ -702,6 +743,23 @@ def delete_course(id):
         flash('No se puede eliminar el curso debido a dependencias en la base de datos.', 'danger')
     else:
         flash(f'Error al eliminar el curso: {r.status_code}', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/course/toggle-visibility/<int:id>')
+@login_required
+def toggle_course_visibility(id):
+    data = sb_get('courses', f'id=eq.{id}&select=id,hidden')
+    if not data or len(data) == 0:
+        flash('Curso no encontrado.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    current_hidden = data[0].get('hidden', False)
+    new_hidden = not current_hidden
+    r = sb_patch('courses', 'id', id, {'hidden': new_hidden})
+    if r.status_code in [200, 204]:
+        estado = 'ocultado' if new_hidden else 'mostrado'
+        flash(f'Curso {estado} en la página web.', 'success')
+    else:
+        flash(f'Error al cambiar visibilidad: {r.text}', 'danger')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/appointment/delete/<int:id>')
@@ -989,12 +1047,12 @@ def matricula_schedule(cycle, name, cedula, phone):
     max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs = _get_cycle_availability(cycle)
 
     s = {
-        'work_days': gs.get('mat_work_days') or gs.get('work_days') or '0,1,2,3,4',
-        'start_time': gs.get('mat_start_time') or gs.get('start_time') or '08:00',
-        'end_time': gs.get('mat_end_time') or gs.get('end_time') or '16:00',
+        'work_days': gs.get(f'mat_{cycle}_work_days') or gs.get('mat_work_days') or gs.get('work_days') or '0,1,2,3,4',
+        'start_time': gs.get(f'mat_{cycle}_start_time') or gs.get('mat_start_time') or gs.get('start_time') or '08:00',
+        'end_time': gs.get(f'mat_{cycle}_end_time') or gs.get('mat_end_time') or gs.get('end_time') or '16:00',
         'lunch_start': gs.get('mat_lunch_start') or gs.get('lunch_start') or '12:00',
         'lunch_end': gs.get('mat_lunch_end') or gs.get('lunch_end') or '13:00',
-        'apt_duration': gs.get('mat_apt_duration') or '30'
+        'apt_duration': gs.get(f'mat_{cycle}_apt_duration') or gs.get('mat_apt_duration') or '30'
     }
 
     now_cr = datetime.now(CR_TZ)

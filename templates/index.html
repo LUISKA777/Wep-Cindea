@@ -7,8 +7,15 @@
         <h1 class="display-3 fw-bold text-primary mb-3">Liderando el <span class="text-white">Futuro Educativo</span></h1>
         <p class="lead text-muted mb-4">En Cindea de Venecia, impulsamos tu crecimiento con educación accesible, moderna y de calidad. Únete a nuestra comunidad y transforma tu vida profesional.</p>
         <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
-            <a href="#cursos" class="btn btn-primary btn-lg px-4 py-3 fw-bold">Ver Cursos Disponibles</a>
-            <a href="tel:24721135" class="btn btn-outline-primary btn-lg px-4 py-3 fw-bold">Contactar Ahora</a>
+            <a href="#cursos" class="btn btn-primary btn-lg px-4 py-3 fw-bold">
+                <i class="bi bi-book me-2"></i>Ver Cursos Técnicos
+            </a>
+            <a href="{{ url_for('matriculas') }}" class="btn btn-success btn-lg px-4 py-3 fw-bold">
+                <i class="bi bi-mortarboard me-2"></i>Matrícula Regular
+            </a>
+            <a href="tel:24721135" class="btn btn-outline-primary btn-lg px-4 py-3 fw-bold">
+                <i class="bi bi-telephone me-2"></i>Contactar
+            </a>
         </div>
     </div>
     <div class="col-lg-6 d-none d-lg-block text-center">
@@ -89,17 +96,24 @@
         {% if courses %}
             {% for course in courses %}
             <div class="col-md-4">
-                <div class="card h-100 shadow-sm hover-card">
+                <div class="card h-100 shadow-sm hover-card" style="border-left: 4px solid var(--accent-blue) !important; border-top: none; border-right: none; border-bottom: none;">
                     <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title fw-bold mb-0 text-primary">{{ course.name }}</h5>
-                            <span class="badge bg-primary text-dark">Cupos: {{ course.vacancies_left_val }} / {{ course.total_vacancies }}</span>
+                        <div class="d-flex align-items-center mb-2 gap-2">
+                            <span class="badge text-white fw-bold px-2 py-1" style="background: var(--accent-blue); font-size: 0.7rem; letter-spacing:0.5px;">
+                                <i class="bi bi-book me-1"></i>CURSO TÉCNICO
+                            </span>
+                            <span class="badge {{ 'bg-danger' if course.vacancies_left_val == 0 else 'bg-success' }} ms-auto">
+                                Cupos: {{ course.vacancies_left_val }} / {{ course.total_vacancies }}
+                            </span>
                         </div>
-                        <p class="card-text text-muted">{{ course.description }}</p>
+                        <h5 class="card-title fw-bold mb-2 text-primary">{{ course.name }}</h5>
+                        <p class="card-text text-muted small">{{ course.description }}</p>
                     </div>
                     <div class="card-footer bg-transparent border-0 pb-4 px-4">
                         {% if course.vacancies_left_val > 0 %}
-                            <a href="{{ url_for('enroll', course_id=course.id) }}" class="btn btn-primary w-100 fw-bold py-2">Inscribirse Ahora</a>
+                            <a href="{{ url_for('enroll', course_id=course.id) }}" class="btn w-100 fw-bold py-2" style="background: var(--accent-blue); color: white; border: none;">
+                                <i class="bi bi-pencil-square me-2"></i>Inscribirse al Curso
+                            </a>
                         {% else %}
                             <button class="btn btn-secondary w-100 disabled py-2">Sin Cupos Disponibles</button>
                         {% endif %}
@@ -115,6 +129,16 @@
                 </div>
             </div>
         {% endif %}
+    </div>
+
+    <!-- Bloque de acceso rápido a Matrícula -->
+    <div class="mt-5 p-4 rounded-4 text-center" style="background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(6,182,212,0.12)); border: 2px solid rgba(34,197,94,0.35);">
+        <i class="bi bi-mortarboard fs-1 text-success mb-3 d-block"></i>
+        <h4 class="fw-bold mb-2" style="color: var(--text-main);">¿Busca matricularse en el programa regular?</h4>
+        <p class="text-muted mb-4">La matrícula regular (Primaria, Secundaria y Diversificado) es diferente a los cursos técnicos. Programe su cita de matrícula aquí.</p>
+        <a href="{{ url_for('matriculas') }}" class="btn btn-success btn-lg fw-bold px-5 py-3" style="font-size: 1.1rem;">
+            <i class="bi bi-calendar-check me-2"></i>Ir a Matrícula Regular
+        </a>
     </div>
 </div>
 {% endblock %}
