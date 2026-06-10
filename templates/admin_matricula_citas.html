@@ -26,44 +26,121 @@
                         <th class="text-end pe-4">Acción</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="appointments-table-body">
+                    {% set last_date = "" %}
                     {% for apt in appointments %}
-                    <tr>
-                        <td class="ps-4 fw-bold">{{ apt.student_name }}</td>
-                        <td>{{ apt.student_cedula }}</td>
-                        <td>{{ apt.student_phone }}</td>
-                        <td class="text-center">
-                            {% if apt.cycle == 'primaria' %}
-                                <span class="badge bg-warning text-dark">1er Nivel (Primaria)</span>
-                            {% elif apt.cycle == 'segundo_nivel' %}
-                                <span class="badge bg-info text-dark">2do Nivel (7°-9°)</span>
-                            {% elif apt.cycle == 'tercer_nivel' %}
-                                <span class="badge bg-success">3er Nivel (10°-11°)</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ apt.cycle }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <div class="fw-bold">{{ apt.appointment_date }}</div>
-                            <div class="small text-muted">{{ apt.appointment_time }}</div>
-                        </td>
-                        <td class="text-end pe-4">
-                            <span class="text-muted small me-2">{{ apt.created_at }}</span>
-                            <a href="{{ url_for('delete_matricula_cita', id=apt.id) }}"
-                               class="btn btn-sm btn-outline-secondary"
-                               onclick="return confirm('¿Marcar cita como procesada/eliminada?')">
-                                <i class="bi bi-check-lg"></i>
-                            </a>
-                        </td>
-                    </tr>
+                        {% if apt.appointment_date != last_date %}
+                            <tr class="table-light">
+                                <td colspan="6" class="ps-4 fw-bold text-dark py-2" style="background-color: rgba(0,0,0,0.05);">
+                                    <i class="bi bi-calendar3 me-2"></i>{{ apt.appointment_date }}
+                                </td>
+                            </tr>
+                            {% set last_date = apt.appointment_date %}
+                        {% endif %}
+                        <tr>
+                            <td class="ps-4 fw-bold">{{ apt.student_name }}</td>
+                            <td>{{ apt.student_cedula }}</td>
+                            <td>{{ apt.student_phone }}</td>
+                            <td class="text-center">
+                                {% if apt.cycle == 'primaria' %}
+                                    <span class="badge bg-warning text-dark">1er Nivel (Primaria)</span>
+                                {% elif apt.cycle == 'segundo_nivel' %}
+                                    <span class="badge bg-info text-dark">2do Nivel (7°-9°)</span>
+                                {% elif apt.cycle == 'tercer_nivel' %}
+                                    <span class="badge bg-success">3er Nivel (10°-11°)</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ apt.cycle }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="fw-bold">{{ apt.appointment_date }}</div>
+                                <div class="small text-muted">{{ apt.appointment_time }}</div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-muted small me-2">{{ apt.created_at }}</span>
+                                <a href="{{ url_for('delete_matricula_cita', id=apt.id) }}"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   onclick="return confirm('¿Marcar cita como procesada/eliminada?')">
+                                    <i class="bi bi-check-lg"></i>
+                                </a>
+                            </td>
+                        </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">No hay citas de matrícula programadas.</td>
-                    </tr>
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No hay citas de matrícula programadas.</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<script>
+async function updateAppointments() {
+    try {
+        const response = await fetch('{{ url_for('api_admin_matricula_citas') }}');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const tbody = document.getElementById('appointments-table-body');
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No hay citas de matrícula programadas.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        let lastDate = '';
+
+        data.forEach(apt => {
+            if (apt.appointment_date !== lastDate) {
+                html += `<tr class="table-light">
+                            <td colspan="6" class="ps-4 fw-bold text-dark py-2" style="background-color: rgba(0,0,0,0.05);">
+                                <i class="bi bi-calendar3 me-2"></i>${apt.appointment_date}
+                            </td>
+                         </tr>`;
+                lastDate = apt.appointment_date;
+            }
+
+            let badge = '';
+            if (apt.cycle === 'primaria') {
+                badge = '<span class="badge bg-warning text-dark">1er Nivel (Primaria)</span>';
+            } else if (apt.cycle === 'segundo_nivel') {
+                badge = '<span class="badge bg-info text-dark">2do Nivel (7°-9°)</span>';
+            } else if (apt.cycle === 'tercer_nivel') {
+                badge = '<span class="badge bg-success">3er Nivel (10°-11°)</span>';
+            } else {
+                badge = `<span class="badge bg-secondary">${apt.cycle}</span>`;
+            }
+
+            html += `
+                <tr>
+                    <td class="ps-4 fw-bold">${apt.student_name}</td>
+                    <td>${apt.student_cedula}</td>
+                    <td>${apt.student_phone}</td>
+                    <td class="text-center">${badge}</td>
+                    <td class="text-center">
+                        <div class="fw-bold">${apt.appointment_date}</div>
+                        <div class="small text-muted">${apt.appointment_time}</div>
+                    </td>
+                    <td class="text-end pe-4">
+                        <span class="text-muted small me-2">${apt.created_at}</span>
+                        <a href="/admin/matricula-citas/delete/${apt.id}"
+                           class="btn btn-sm btn-outline-secondary"
+                           onclick="return confirm('¿Marcar cita como procesada/eliminada?')">
+                            <i class="bi bi-check-lg"></i>
+                        </a>
+                    </td>
+                </tr>`;
+        });
+
+        tbody.innerHTML = html;
+    } catch (e) {
+        console.error('Error updating appointments:', e);
+    }
+}
+
+setInterval(updateAppointments, 10000);
+</script>
 {% endblock %}

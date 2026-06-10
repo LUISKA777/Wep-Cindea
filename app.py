@@ -872,7 +872,24 @@ def matriculas():
 
     return render_template('matriculas.html', grouped_dates=grouped_dates, all_dates=dates_list)
 
-@app.route('/admin/matriculas', methods=['GET', 'POST'])
+def format_appointment_data(appointments):
+    if not isinstance(appointments, list):
+        return []
+    for a in appointments:
+        if 'appointment_date' in a:
+            # Guard against already formatted dates (if the function is called twice)
+            date_val = a['appointment_date']
+            if date_val and ' de ' in date_val:
+                pass # already formatted
+            elif date_val:
+                a['appointment_date'] = format_date_spanish(date_val.split('T')[0])
+        if 'created_at' in a:
+            created_val = a['created_at']
+            if created_val and 'T' in created_val:
+                a['created_at'] = created_val.split('T')[0] + ' ' + created_val.split('T')[1][:5]
+    return appointments
+
+@app.route('/admin/matriculas')
 @login_required
 def admin_matriculas():
     if request.method == 'POST':
@@ -1122,8 +1139,8 @@ def matricula_schedule(cycle, name, cedula, phone):
                     all_possible_slots.append({'date': d.isoformat(), 'time': time_str})
                 current_total_min += duration
 
-    # Filtrar ocupados (tabla matricula_appointments)
-    occupied = sb_get('matricula_appointments', f'cycle=eq.{cycle}&select=appointment_date,appointment_time')
+    # Filtrar ocupados (tabla matricula_appointments) - GLOBAL (todos los ciclos)
+    occupied = sb_get('matricula_appointments', 'select=appointment_date,appointment_time')
     taken_set = set()
     if isinstance(occupied, list):
         for slot in occupied:
@@ -1203,17 +1220,19 @@ def matricula_receipt(apt_id):
     return render_template('matricula_receipt.html', appointment=apt_details, info=info)
 
 
+@app.route('/admin/matricula-citas/api')
+@login_required
+def api_admin_matricula_citas():
+    # Ordenar por fecha y hora ascendente
+    appointments = sb_get('matricula_appointments', 'select=*&order=appointment_date.asc,appointment_time.asc')
+    return format_appointment_data(appointments)
+
 @app.route('/admin/matricula-citas')
 @login_required
 def admin_matricula_citas():
-    appointments = sb_get('matricula_appointments', 'select=*&order=created_at.desc')
-    if not isinstance(appointments, list):
-        appointments = []
-    for a in appointments:
-        if 'appointment_date' in a:
-            a['appointment_date'] = format_date_spanish(a['appointment_date'].split('T')[0])
-        if 'created_at' in a:
-            a['created_at'] = a['created_at'].split('T')[0] + ' ' + a['created_at'].split('T')[1][:5] if 'T' in a['created_at'] else a['created_at']
+    # Ordenar por fecha y hora ascendente
+    appointments = sb_get('matricula_appointments', 'select=*&order=appointment_date.asc,appointment_time.asc')
+    appointments = format_appointment_data(appointments)
     return render_template('admin_matricula_citas.html', appointments=appointments)
 
 
