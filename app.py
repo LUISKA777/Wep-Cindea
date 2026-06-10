@@ -10,6 +10,21 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cindea-secret-key-12345
 
 CR_TZ = pytz.timezone('America/Costa_Rica')
 
+ENROLLMENT_KEYWORDS = {
+    '3er Ciclo': {
+        'cycle_id': 'tercer_nivel',
+        'keywords': ['3er ciclo', 'tercer ciclo', 'tercer', '10mo', '11vo', '10vo', 'décimo', 'undécimo']
+    },
+    '2do Ciclo': {
+        'cycle_id': 'segundo_nivel',
+        'keywords': ['2do ciclo', 'segundo ciclo', 'segundo', '7mo', '8vo', '9no', '7vo', '8vo', '9no', 'sétimo', 'octavo', 'noveno']
+    },
+    'Primaria': {
+        'cycle_id': 'primaria',
+        'keywords': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to', 'primer nivel']
+    }
+}
+
 SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://cdhwvbbbboqkxzichrxt.supabase.co')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkaHd2YmJiYm9xa3h6aWNocnh0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTAzNTAxOSwiZXhwIjoyMDk0NjExMDE5fQ.JBYZbzsbe7cAAxwZ6oUDW-XFUmpt0makEPmx5kNFz2A')
 
@@ -846,22 +861,12 @@ def matriculas():
     dates_list = res if isinstance(res, list) else []
 
     # Agrupamos los datos en Python para que la plantilla sea simple y no falle
-    grouped_dates = {
-        'Primaria': [],
-        '2do Ciclo': [],
-        '3er Ciclo': []
-    }
-
-    keywords = {
-        'Primaria': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to'],
-        '2do Ciclo': ['2do ciclo', '7mo', '8vo', '9no', '7vo', '8vo', '9no'],
-        '3er Ciclo': ['3er ciclo', '10mo', '11vo', '10vo']
-    }
+    grouped_dates = {cycle: [] for cycle in ENROLLMENT_KEYWORDS.keys()}
 
     for d in dates_list:
         level_text = str(d.get('level', '')).lower()
-        for cycle, keys in keywords.items():
-            if any(k in level_text for k in keys):
+        for cycle, info in ENROLLMENT_KEYWORDS.items():
+            if any(k in level_text for k in info['keywords']):
                 grouped_dates[cycle].append(d)
                 break
 
@@ -956,13 +961,11 @@ def _get_cycle_availability(cycle):
 
     # 1. Intentar obtener fechas desde la tabla enrollment_dates
     opening_val, closing_val = None, None
-    cycle_keywords = {
-        'primaria': ['primaria'],
-        'segundo_nivel': ['segundo', '2do ciclo', '7mo', '8vo', '9no'],
-        'tercer_nivel': ['tercer', '3er ciclo', '10mo', '11vo']
-    }
 
-    keywords = cycle_keywords.get(cycle, [])
+    # Buscar el ciclo correspondiente en ENROLLMENT_KEYWORDS
+    matching_cycle = next((name, info) for name, info in ENROLLMENT_KEYWORDS.items() if info['cycle_id'] == cycle)
+    keywords = matching_cycle[1]['keywords']
+
     if keywords:
         enroll_dates = sb_get('enrollment_dates', 'select=level,start_date,end_date')
         if isinstance(enroll_dates, list):
