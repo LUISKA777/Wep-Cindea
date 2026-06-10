@@ -11,15 +11,15 @@
                     <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
                 </ol>
             </nav>
-            <article class="bg-white p-4 shadow-sm rounded">
-                <h1 class="mb-3">{{ post.title }}</h1>
+            <div class="card p-4 shadow-sm rounded">
+                <h1 class="mb-3 text-main">{{ post.title }}</h1>
                 <div class="text-muted mb-4 small">
                     Publicado el {{ post.created_at[:10] if post.created_at else 'Fecha desconocida' }}
                 </div>
-                <div class="content" style="white-space: pre-wrap; line-height: 1.6;">
+                <div class="content" style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main);">
                     {{ post.content }}
                 </div>
-            </article>
+            </div>
             <div class="text-center mt-4">
                 <a href="{{ url_for('posts') }}" class="btn btn-outline-secondary">&larr; Volver a la lista</a>
             </div>
