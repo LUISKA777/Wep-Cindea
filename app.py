@@ -191,9 +191,9 @@ def enroll(course_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        name = request.form.get('name')
-        cedula = request.form.get('cedula')
-        phone = request.form.get('phone')
+        name = request.form.get('name', '').strip()
+        cedula = request.form.get('cedula', '').strip()
+        phone = request.form.get('phone', '').strip()
         if not name or not cedula or not phone:
             flash('Por favor complete todos los campos.', 'warning')
             return render_template('enroll.html', course=course)
@@ -1049,9 +1049,9 @@ def matricula_enroll(cycle):
                                    no_cupos=no_cupos, no_config=no_config,
                                    remaining=remaining, max_cupos=max_cupos,
                                    requirements=gs.get(f'mat_{cycle}_reqs'))
-        name = request.form.get('name')
-        cedula = request.form.get('cedula')
-        phone = request.form.get('phone')
+        name = request.form.get('name', '').strip()
+        cedula = request.form.get('cedula', '').strip()
+        phone = request.form.get('phone', '').strip()
         if not name or not cedula or not phone:
             flash('Por favor complete todos los campos.', 'warning')
             return render_template('matricula_enroll.html', cycle=cycle, info=info,
