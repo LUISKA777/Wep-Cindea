@@ -952,10 +952,10 @@ MATRICULA_CYCLES = {
         'label': 'Segundo Nivel (7°, 8° y 9°)',
         'icon': 'bi-mortarboard',
         'color': 'info',
-        'description': 'Matrícula para estudiantes de Segundo Nivel: Equivalente aSétimo, Octavo y Noveno año.'
+        'description': 'Matrícula para estudiantes de Segundo Nivel: Equivalente a Sétimo, Octavo y Noveno año.'
     },
     'tercer_nivel': {
-        'label': 'Tercer Nivel — Diversificado (10° y 11°)',
+        'label': 'Tercer Nivel — Plan de estudios de educación de adultos ',
         'icon': 'bi-award',
         'color': 'success',
         'description': 'Matrícula para estudiantes del Ciclo Diversificado: Equivalente a Décimo y Undécimo año.'
