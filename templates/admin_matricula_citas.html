@@ -30,8 +30,8 @@
                     {% set last_date = "" %}
                     {% for apt in appointments %}
                         {% if apt.appointment_date != last_date %}
-                            <tr class="table-light">
-                                <td colspan="6" class="ps-4 fw-bold text-dark py-2" style="background-color: rgba(0,0,0,0.05);">
+                            <tr class="table-secondary">
+                                <td colspan="6" class="ps-4 fw-bold text-dark py-2">
                                     <i class="bi bi-calendar3 me-2"></i>{{ apt.appointment_date }}
                                 </td>
                             </tr>
@@ -95,8 +95,8 @@ async function updateAppointments() {
 
         data.forEach(apt => {
             if (apt.appointment_date !== lastDate) {
-                html += `<tr class="table-light">
-                            <td colspan="6" class="ps-4 fw-bold text-dark py-2" style="background-color: rgba(0,0,0,0.05);">
+                html += `<tr class="table-secondary">
+                            <td colspan="6" class="ps-4 fw-bold text-dark py-2">
                                 <i class="bi bi-calendar3 me-2"></i>${apt.appointment_date}
                             </td>
                          </tr>`;
