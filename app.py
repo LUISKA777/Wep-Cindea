@@ -4,6 +4,7 @@ import os
 import requests as http
 from datetime import date, timedelta, datetime, time
 import pytz
+from urllib.parse import unquote
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cindea-secret-key-12345')
@@ -203,6 +204,9 @@ def enroll(course_id):
 
 @app.route('/schedule/<int:course_id>/<name>/<cedula>/<phone>', methods=['GET', 'POST'])
 def schedule_appointment(course_id, name, cedula, phone):
+    name = unquote(name)
+    cedula = unquote(cedula)
+    phone = unquote(phone)
     data = sb_get('courses', f'id=eq.{course_id}&select=*')
     if not data or len(data) == 0:
         return "Curso no encontrado", 404
@@ -1068,6 +1072,9 @@ def matricula_enroll(cycle):
 
 @app.route('/matricula/<cycle>/cita/<name>/<cedula>/<phone>', methods=['GET', 'POST'])
 def matricula_schedule(cycle, name, cedula, phone):
+    name = unquote(name)
+    cedula = unquote(cedula)
+    phone = unquote(phone)
     if cycle not in MATRICULA_CYCLES:
         return "Ciclo no válido", 404
     info = MATRICULA_CYCLES[cycle]
