@@ -92,6 +92,19 @@ def sb_delete(table, match_col, match_val):
     r = http.delete(url, headers=delete_headers)
     return r
 
+def user_has_appointment(cedula):
+    # Check specific course appointments
+    apt = sb_get('appointments', f'student_cedula=eq.{cedula}&select=id')
+    if isinstance(apt, list) and len(apt) > 0:
+        return True
+
+    # Check general enrollment appointments
+    mat_apt = sb_get('matricula_appointments', f'student_cedula=eq.{cedula}&select=id')
+    if isinstance(mat_apt, list) and len(mat_apt) > 0:
+        return True
+
+    return False
+
 
 class User(UserMixin):
     def __init__(self, user_id, username):
@@ -198,6 +211,11 @@ def enroll(course_id):
         if not name or not cedula or not phone:
             flash('Por favor complete todos los campos.', 'warning')
             return render_template('enroll.html', course=course)
+
+        if user_has_appointment(cedula):
+            flash('Usted ya tiene una cita programada. Por favor, contacte a la administración si necesita realizar un cambio.', 'danger')
+            return redirect(url_for('index'))
+
         return redirect(url_for('schedule_appointment', course_id=course_id, name=name, cedula=cedula, phone=phone))
 
     return render_template('enroll.html', course=course)
@@ -422,6 +440,10 @@ def schedule_appointment(course_id, name, cedula, phone):
                 return _apt_render()
         except Exception as e:
             flash('Error al validar la fecha y hora seleccionadas.', 'danger')
+            return _apt_render()
+
+        if user_has_appointment(cedula):
+            flash('Usted ya tiene una cita programada. Por favor, contacte a la administración si necesita realizar un cambio.', 'danger')
             return _apt_render()
 
         apt_data = sb_post('appointments', {
@@ -1062,6 +1084,14 @@ def matricula_enroll(cycle):
                                    no_cupos=no_cupos, no_config=no_config,
                                    remaining=remaining, max_cupos=max_cupos,
                                    requirements=gs.get(f'mat_{cycle}_reqs'))
+
+        if user_has_appointment(cedula):
+            flash('Usted ya tiene una cita programada. Por favor, contacte a la administración si necesita realizar un cambio.', 'danger')
+            return render_template('matricula_enroll.html', cycle=cycle, info=info,
+                                   no_cupos=no_cupos, no_config=no_config,
+                                   remaining=remaining, max_cupos=max_cupos,
+                                   requirements=gs.get(f'mat_{cycle}_reqs'))
+
         return redirect(url_for('matricula_schedule', cycle=cycle, name=name, cedula=cedula, phone=phone))
 
     return render_template('matricula_enroll.html', cycle=cycle, info=info,
@@ -1195,6 +1225,10 @@ def matricula_schedule(cycle, name, cedula, phone):
                 return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
         except Exception:
             flash('Error al validar la fecha seleccionada.', 'danger')
+            return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
+
+        if user_has_appointment(cedula):
+            flash('Usted ya tiene una cita programada. Por favor, contacte a la administración si necesita realizar un cambio.', 'danger')
             return render_template('matricula_appointment.html', cycle=cycle, info=info, name=name, cedula=cedula, phone=phone, dates=formatted_dates, times=available_times, taken=fake_taken, slots_by_date=slots_by_date, matricula_configured=matricula_configured)
 
         apt_data = sb_post('matricula_appointments', {
