@@ -11,7 +11,7 @@
 
 <div class="card shadow border-primary">
     <div class="card-header fw-bold py-3 bg-primary text-white">
-        <i class="bi bi-calendar-check me-2"></i>Citas Programadas — Tres Niveles
+        <i class="bi bi-calendar-check me-2"></i>Citas Programadas — Tres Niveles <span id="appointment-count" class="badge bg-light text-primary ms-2">0</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -83,6 +83,9 @@ async function updateAppointments() {
         if (!response.ok) return;
 
         const data = await response.json();
+        // Update appointment count
+        document.getElementById('appointment-count').textContent = data.length;
+
         const tbody = document.getElementById('appointments-table-body');
 
         if (data.length === 0) {
