@@ -370,8 +370,8 @@ def schedule_appointment(course_id, name, cedula, phone):
 
     available_slots = [slot for slot in all_possible_slots if (slot['date'], slot['time']) not in taken_set]
 
-    # LIMIT slots to vacancies_left
-    selected_slots = available_slots[:vacancies_left]
+    # Show all available slots (not limited by vacancies_left)
+    selected_slots = available_slots
 
     # Prepare data for template
     formatted_dates = []
@@ -445,6 +445,19 @@ def schedule_appointment(course_id, name, cedula, phone):
         if user_has_appointment(cedula):
             flash('Usted ya tiene una cita programada. Por favor, contacte a la administración si necesita realizar un cambio.', 'danger')
             return _apt_render()
+
+        # Check if course still has vacancies left (prevent race condition)
+        current_course_data = sb_get('courses', f'id=eq.{course_id}&select=total_vacancies,filled_vacancies')
+        if isinstance(current_course_data, list) and len(current_course_data) > 0:
+            current_course = current_course_data[0]
+            if current_course['filled_vacancies'] >= current_course['total_vacancies']:
+                flash('Lo sentimos, este curso ya no tiene cupos disponibles.', 'danger')
+                return _apt_render()
+        else:
+            # Error fetching course, fallback to original course variable
+            if course['filled_vacancies'] >= course['total_vacancies']:
+                flash('Lo sentimos, este curso ya no tiene cupos disponibles.', 'danger')
+                return _apt_render()
 
         apt_data = sb_post('appointments', {
             'student_name': name,
@@ -981,7 +994,7 @@ MATRICULA_CYCLES = {
         'description': 'Matrícula para estudiantes de Segundo Nivel: Equivalente a Sétimo, Octavo y Noveno año.'
     },
     'tercer_nivel': {
-        'label': 'Tercer Nivel — Plan de estudios de educación de adultos ',
+        'label': 'Tercer Nivel — Plan de estudios de educación de adultos k',
         'icon': 'bi-award',
         'color': 'success',
         'description': 'Matrícula para estudiantes del Ciclo Diversificado: Equivalente a Décimo y Undécimo año.'
