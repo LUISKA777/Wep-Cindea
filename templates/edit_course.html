@@ -28,7 +28,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Niveles Educativos Permitidos</label>
-                            <div class="d-flex flex-wrap gap-3 p-2 border rounded bg-white">
+                            <div class="d-flex flex-wrap gap-3 p-2 border rounded">
                                 {% set current_levels = course.required_levels.split(',') if course.required_levels else [] %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="required_levels" value="Primaria Aprobada" id="edit_lvl1" {% if 'Primaria Aprobada' in current_levels %}checked{% endif %}>
