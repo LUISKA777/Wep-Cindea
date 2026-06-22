@@ -56,9 +56,9 @@
                             <td class="text-center">
                                 {% if user.level %}
                                     <span class="badge bg-secondary text-dark">
-                                        {% if user.level == 'primaria' %}Primaria
-                                        {% elif user.level == 'segundo_nivel' %}Segundo Ciclo
-                                        {% elif user.level == 'tercer_nivel' %}Tercer Ciclo
+                                        {% if user.level == 'primaria' %}primer nivel
+                                        {% elif user.level == 'segundo_nivel' %}Segundo nivel
+                                        {% elif user.level == 'tercer_nivel' %}tercer nivel
                                         {% else %}{{ user.level }}
                                         {% endif %}
                                     </span>

@@ -94,9 +94,9 @@
                         <label for="level" class="form-label fw-bold">Nivel Académico (Solo para Estudiantes)</label>
                         <select class="form-select" id="level" name="level">
                             <option value="">-- Seleccione un nivel --</option>
-                            <option value="primaria" {% if action == 'edit' and user.level == 'primaria' %}selected{% endif %}>Primaria</option>
-                            <option value="segundo_nivel" {% if action == 'edit' and user.level == 'segundo_nivel' %}selected{% endif %}>Segundo Ciclo</option>
-                            <option value="tercer_nivel" {% if action == 'edit' and user.level == 'tercer_nivel' %}selected{% endif %}>Tercer Ciclo</option>
+                            <option value="primaria" {% if action == 'edit' and user.level == 'primaria' %}selected{% endif %}>primer nivel</option>
+                            <option value="segundo_nivel" {% if action == 'edit' and user.level == 'segundo_nivel' %}selected{% endif %}>Segundo nivel</option>
+                            <option value="tercer_nivel" {% if action == 'edit' and user.level == 'tercer_nivel' %}selected{% endif %}>tercer nivel</option>
                         </select>
                         <div class="form-text">Este campo solo es relevante para usuarios con rol de Estudiante.</div>
                     </div>

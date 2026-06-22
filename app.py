@@ -14,15 +14,15 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cindea-secret-key-12345
 CR_TZ = pytz.timezone('America/Costa_Rica')
 
 ENROLLMENT_KEYWORDS = {
-    '3er Ciclo': {
+    'tercer nivel': {
         'cycle_id': 'tercer_nivel',
-        'keywords': ['3er ciclo', 'tercer ciclo', 'tercer', '10mo', '11vo', '10vo', 'décimo', 'undécimo']
+        'keywords': ['3er ciclo', 'tercer ciclo', 'tercer', '10mo', '11vo', '10vo', 'décimo', 'undécimo', 'tercer nivel']
     },
-    '2do Ciclo': {
+    'Segundo nivel': {
         'cycle_id': 'segundo_nivel',
-        'keywords': ['2do ciclo', 'segundo ciclo', 'segundo', '7mo', '8vo', '9no', '7vo', '8vo', '9no', 'sétimo', 'octavo', 'noveno']
+        'keywords': ['2do ciclo', 'segundo ciclo', 'segundo', '7mo', '8vo', '9no', '7vo', '8vo', '9no', 'sétimo', 'octavo', 'noveno', 'Segundo nivel']
     },
-    'Primaria': {
+    'primer nivel': {
         'cycle_id': 'primaria',
         'keywords': ['primaria', '1ero', '2do', '3ero', '4to', '5to', '6to', '1ro', '2do', '3ro', '4to', '5to', '6to', 'primer nivel']
     }
@@ -1086,7 +1086,7 @@ def delete_enrollment_date(id):
 
 MATRICULA_CYCLES = {
     'primaria': {
-        'label': 'Primer Nivel (Primaria)',
+        'label': 'Primer Nivel (primer nivel)',
         'icon': 'bi-book',
         'color': 'warning',
         'description': 'Matrícula para estudiantes de Educación Primaria (1° a 6° grado).'
@@ -1098,7 +1098,7 @@ MATRICULA_CYCLES = {
         'description': 'Matrícula para estudiantes de Segundo Nivel: Equivalente a Sétimo, Octavo y Noveno año.'
     },
     'tercer_nivel': {
-        'label': 'Tercer Nivel — Plan de estudios de educación de adultos k',
+        'label': 'tercer nivel — Plan de estudios de educación de adultos k',
         'icon': 'bi-award',
         'color': 'success',
         'description': 'Matrícula para estudiantes del Ciclo Diversificado: Equivalente a Décimo y Undécimo año.'

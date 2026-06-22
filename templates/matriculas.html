@@ -71,7 +71,7 @@
                     <tbody>
                         {% for d in items %}
                         <tr style="border-bottom: 1px solid var(--glass-border);">
-                            <td class="fw-bold">{{ d.level }}</td>
+                            <td class="fw-bold">{{ d.level | replace('Primaria', 'primer nivel') | replace('2do Ciclo', 'Segundo nivel') | replace('3er Ciclo', 'tercer nivel') }}</td>
                             <td>{{ d.start_date }}</td>
                             <td>{{ d.end_date }}</td>
                         </tr>
