@@ -1483,6 +1483,7 @@ def admin_users():
 @login_required
 @admin_required
 def admin_create_user():
+    print("DEBUG: admin_create_user accessed")  # Debug line
     if request.method == 'POST':
         try:
             username = request.form.get('username', '').strip()
@@ -1676,5 +1677,9 @@ def professor_enter_grade():
 
     return redirect(url_for('professor_dashboard'))
 
+
+@app.route('/test')
+def test():
+    return 'OK'
 
 handler = app
