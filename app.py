@@ -1484,48 +1484,53 @@ def admin_users():
 @admin_required
 def admin_create_user():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
-        role = request.form.get('role', 'student')
-        first_name = request.form.get('first_name', '').strip()
-        last_name = request.form.get('last_name', '').strip()
-        cedula = request.form.get('cedula', '').strip()
-        email = request.form.get('email', '').strip()
-        phone = request.form.get('phone', '').strip()
-        level = request.form.get('level', '') if role == 'student' else None
+        try:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
+            role = request.form.get('role', 'student')
+            first_name = request.form.get('first_name', '').strip()
+            last_name = request.form.get('last_name', '').strip()
+            cedula = request.form.get('cedula', '').strip()
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone', '').strip()
+            level = request.form.get('level', '') if role == 'student' else None
 
-        if not username or not password:
-            flash('Usuario y contraseña son requeridos.', 'danger')
-            return render_template('admin_user_form.html', action='create')
+            if not username or not password:
+                flash('Usuario y contraseña son requeridos.', 'danger')
+                return render_template('admin_user_form.html', action='create')
 
-        # Check if username already exists
-        existing = sb_get('users', f'username=eq.{username}&select=id')
-        if isinstance(existing, list) and len(existing) > 0:
-            flash('El nombre de usuario ya existe.', 'danger')
-            return render_template('admin_user_form.html', action='create')
+            # Check if username already exists
+            existing = sb_get('users', f'username=eq.{username}&select=id')
+            if isinstance(existing, list) and len(existing) > 0:
+                flash('El nombre de usuario ya existe.', 'danger')
+                return render_template('admin_user_form.html', action='create')
 
-        # Hash password
-        hashed_password = generate_password_hash(password)
+            # Hash password
+            hashed_password = generate_password_hash(password)
 
-        # Create user
-        user_data = {
-            'username': username,
-            'password': hashed_password,
-            'role': role,
-            'first_name': first_name,
-            'last_name': last_name,
-            'cedula': cedula,
-            'email': email,
-            'phone': phone,
-            'level': level
-        }
+            # Create user
+            user_data = {
+                'username': username,
+                'password': hashed_password,
+                'role': role,
+                'first_name': first_name,
+                'last_name': last_name,
+                'cedula': cedula,
+                'email': email,
+                'phone': phone,
+                'level': level
+            }
 
-        result = sb_post('users', user_data)
-        if isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
-            flash('Usuario creado exitosamente.', 'success')
-            return redirect(url_for('admin_users'))
-        else:
-            flash(f'Error al crear usuario: {result}', 'danger')
+            result = sb_post('users', user_data)
+            if isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
+                flash('Usuario creado exitosamente.', 'success')
+                return redirect(url_for('admin_users'))
+            else:
+                flash(f'Error al crear usuario: {result}', 'danger')
+        except Exception as e:
+            flash(f'Error inesperado: {str(e)}', 'danger')
+            # Optionally log the error
+            print(f"Error in admin_create_user: {e}")
 
     return render_template('admin_user_form.html', action='create')
 
