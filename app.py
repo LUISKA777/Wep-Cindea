@@ -566,30 +566,48 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        data = sb_get('users', f'username=eq.{username}&password=eq.{password}&select=*')
-        if data and len(data) > 0:
-            user_data = data[0]
-            user = User(
-                id=user_data['id'],
-                username=user_data['username'],
-                role=user_data.get('role', 'student'),
-                first_name=user_data.get('first_name'),
-                last_name=user_data.get('last_name'),
-                cedula=user_data.get('cedula'),
-                email=user_data.get('email'),
-                phone=user_data.get('phone'),
-                level=user_data.get('level')
-            )
-            login_user(user)
+        # Fetch user by username only
+        user_data_list = sb_get('users', f'username=eq.{username}&select=*')
+        if isinstance(user_data_list, list) and len(user_data_list) > 0:
+            ud = user_data_list[0]
+            stored_pw = ud.get('password')
+            # Verify password: either direct match (legacy plaintext) or hash match
+            pw_ok = False
+            if stored_pw is not None:
+                try:
+                    # werkzeug's check_password_hash handles valid hashes
+                    pw_ok = check_password_hash(stored_pw, password)
+                except Exception:
+                    # If check_password_hash raises (e.g., invalid hash format), treat as plaintext
+                    pw_ok = False
+                # Fallback to direct comparison for plaintext passwords
+                if not pw_ok:
+                    pw_ok = (stored_pw == password)
+            if pw_ok:
+                user = User(
+                    id=ud['id'],
+                    username=ud['username'],
+                    role=ud.get('role', 'student'),
+                    first_name=ud.get('first_name'),
+                    last_name=ud.get('last_name'),
+                    cedula=ud.get('cedula'),
+                    email=ud.get('email'),
+                    phone=ud.get('phone'),
+                    level=ud.get('level')
+                )
+                login_user(user)
 
-            # Redirect based on role
-            if user.is_admin:
-                return redirect(url_for('admin_dashboard'))
-            elif user.is_student:
-                return redirect(url_for('student_dashboard'))
-            elif user.is_professor:
-                return redirect(url_for('professor_dashboard'))
-        flash('Credenciales incorrectas.', 'danger')
+                # Redirect based on role
+                if user.is_admin:
+                    return redirect(url_for('admin_dashboard'))
+                elif user.is_student:
+                    return redirect(url_for('student_dashboard'))
+                elif user.is_professor:
+                    return redirect(url_for('professor_dashboard'))
+            else:
+                flash('Credenciales incorrectas.', 'danger')
+        else:
+            flash('Credenciales incorrectas.', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
