@@ -33,15 +33,25 @@
                         <a class="nav-link" href="{{ url_for('matriculas') }}">Matrículas</a>
                     </li>
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Panel Admin</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_logout') }}">Cerrar Sesión</a>
-                    </li>
+                      {% if current_user.is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Panel Admin</a>
+                        </li>
+                      {% elif current_user.is_student %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('student_dashboard') }}">Portal Estudiante</a>
+                        </li>
+                      {% elif current_user.is_professor %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('professor_dashboard') }}">Portal Profesor</a>
+                        </li>
+                      {% endif %}
+                      <li class="nav-item">
+                          <a class="nav-link" href="{{ url_for('logout') }}">Cerrar Sesión</a>
+                      </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin_login') }}">Administración</a>
+                        <a class="nav-link" href="{{ url_for('login') }}">Iniciar Sesión</a>
                     </li>
                     {% endif %}
                 </ul>

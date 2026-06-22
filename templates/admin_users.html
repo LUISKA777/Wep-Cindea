@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Gestionar Usuarios - Cindea de Venecia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">Gestión de Usuarios</h2>
+        <a href="{{ url_for('admin_create_user') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Crear Nuevo Usuario
+        </a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver al Panel
+        </a>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header fw-bold py-3 bg-primary text-white">
+            <i class="bi bi-people me-2"></i>Lista de Usuarios
+        </div>
+        <div class="card-body">
+            {% if users %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th class="text-center">Rol</th>
+                            <th class="text-center">Cédula</th>
+                            <th class="text-center">Email</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td class="ps-4 fw-bold">{{ user.username }}</td>
+                            <td>
+                                {% if user.first_name or user.last_name %}
+                                    {{ user.first_name }} {{ user.last_name }}
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if user.role == 'admin' %}bg-danger{% elif user.role == 'professor' %}bg-info{% else %}bg-success{% endif %}">
+                                    {% if user.role == 'admin' %}Administrador
+                                    {% elif user.role == 'professor' %}Profesor
+                                    {% else %}Estudiante
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">{{ user.cedula or '-' }}</td>
+                            <td class="text-center">{{ user.email or '-' }}</td>
+                            <td class="text-center">
+                                {% if user.level %}
+                                    <span class="badge bg-secondary text-dark">
+                                        {% if user.level == 'primaria' %}Primaria
+                                        {% elif user.level == 'segundo_nivel' %}Segundo Ciclo
+                                        {% elif user.level == 'tercer_nivel' %}Tercer Ciclo
+                                        {% else %}{{ user.level }}
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin_edit_user', id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin_delete_user', id=user.id) }}" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('¿Está seguro de eliminar este usuario? Esta acción no se puede deshacer.')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-info-circle text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No hay usuarios registrados actualmente.</p>
+                <p>Haga clic en "Crear Nuevo Usuario" para comenzar.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

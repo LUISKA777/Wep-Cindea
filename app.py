@@ -5,6 +5,8 @@ import requests as http
 from datetime import date, timedelta, datetime, time
 import pytz
 from urllib.parse import unquote
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cindea-secret-key-12345')
@@ -106,20 +108,86 @@ def user_has_appointment(cedula):
     return False
 
 
+# Role-based access control decorators
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Acceso denegado. Se requieren privilegios de administrador.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def student_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_student:
+            flash('Acceso denegado. Se requiere cuenta de estudiante.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def professor_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_professor:
+            flash('Acceso denegado. Se requiere cuenta de profesor.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 class User(UserMixin):
-    def __init__(self, user_id, username):
-        self.id = user_id
+    def __init__(self, id, username, role='student', first_name=None, last_name=None,
+                 cedula=None, email=None, phone=None, level=None):
+        self.id = id
         self.username = username
+        self.role = role
+        self.first_name = first_name
+        self.last_name = last_name
+        self.cedula = cedula
+        self.email = email
+        self.phone = phone
+        self.level = level
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def is_student(self):
+        return self.role == 'student'
+
+    @property
+    def is_professor(self):
+        return self.role == 'professor'
+
+    @property
+    def full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'admin_login'
+login_manager.login_view = 'login'  # Unified login for all roles
 
 @login_manager.user_loader
 def load_user(user_id):
     data = sb_get('users', f'id=eq.{user_id}&select=*')
     if data and len(data) > 0:
-        return User(user_id=data[0]['id'], username=data[0]['username'])
+        user_data = data[0]
+        return User(
+            id=user_data['id'],
+            username=user_data['username'],
+            role=user_data.get('role', 'student'),
+            first_name=user_data.get('first_name'),
+            last_name=user_data.get('last_name'),
+            cedula=user_data.get('cedula'),
+            email=user_data.get('email'),
+            phone=user_data.get('phone'),
+            level=user_data.get('level')
+        )
     return None
 
 def get_vacancies_left(course):
@@ -493,24 +561,42 @@ def appointment_receipt(apt_id):
 
     return render_template('receipt.html', appointment=apt_details)
 
-@app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         data = sb_get('users', f'username=eq.{username}&password=eq.{password}&select=*')
         if data and len(data) > 0:
-            user = User(user_id=data[0]['id'], username=data[0]['username'])
+            user_data = data[0]
+            user = User(
+                id=user_data['id'],
+                username=user_data['username'],
+                role=user_data.get('role', 'student'),
+                first_name=user_data.get('first_name'),
+                last_name=user_data.get('last_name'),
+                cedula=user_data.get('cedula'),
+                email=user_data.get('email'),
+                phone=user_data.get('phone'),
+                level=user_data.get('level')
+            )
             login_user(user)
-            return redirect(url_for('admin_dashboard'))
-        flash('Credenciales incorrectas.', 'danger')
-    return render_template('admin_login.html')
 
-@app.route('/admin/logout')
+            # Redirect based on role
+            if user.is_admin:
+                return redirect(url_for('admin_dashboard'))
+            elif user.is_student:
+                return redirect(url_for('student_dashboard'))
+            elif user.is_professor:
+                return redirect(url_for('professor_dashboard'))
+        flash('Credenciales incorrectas.', 'danger')
+    return render_template('login.html')
+
+@app.route('/logout')
 @login_required
-def admin_logout():
+def logout():
     logout_user()
-    return redirect(url_for('admin_login'))
+    return redirect(url_for('login'))
 
 @app.route('/admin')
 @login_required
@@ -1301,6 +1387,289 @@ def delete_matricula_cita(id):
     return redirect(url_for('admin_matricula_citas'))
 
 
+
+
+# Student Dashboard Route
+@app.route('/student/dashboard')
+@login_required
+@student_required
+def student_dashboard():
+    # Get student's enrolled subjects with grades
+    # First, get the student's enrolled subjects
+    enrollments = sb_get('student_subjects', f'student_id=eq.{current_user.id}&is_active=eq.true')
+    if not isinstance(enrollments, list):
+        enrollments = []
+
+    subjects_with_grades = []
+    for enrollment in enrollments:
+        if isinstance(enrollment, dict) and 'subject_id' in enrollment:
+            subject_id = enrollment['subject_id']
+            # Get subject details
+            subject_data = sb_get('subjects', f'id=eq.{subject_id}&select=*')
+            if isinstance(subject_data, list) and len(subject_data) > 0:
+                subject = subject_data[0]
+                # Get grade for this subject
+                grade_data = sb_get('grades', f'student_subject_id=eq.{enrollment["id"]}&select=*')
+                grade = None
+                passed = False
+                if isinstance(grade_data, list) and len(grade_data) > 0:
+                    grade = grade_data[0].get('final_grade')
+                    passed = grade_data[0].get('passed', False)
+
+                subjects_with_grades.append({
+                    'subject': subject,
+                    'enrollment': enrollment,
+                    'final_grade': grade,
+                    'passed': passed
+                })
+
+    return render_template('student_dashboard.html', subjects=subjects_with_grades)
+
+
+# Professor Dashboard Route
+@app.route('/professor/dashboard', methods=['GET', 'POST'])
+@login_required
+@professor_required
+def professor_dashboard():
+    search_results = []
+    if request.method == 'POST':
+        cedula = request.form.get('cedula', '').strip()
+        if cedula:
+            # Search for student by cedula
+            students = sb_get('users', f'cedula=eq.{cedula}&role=eq.student&select=*')
+            if isinstance(students, list) and len(students) > 0:
+                student = students[0]
+                # Get student's enrolled subjects with grades
+                enrollments = sb_get('student_subjects', f'student_id=eq.{student["id"]}&is_active=eq.true')
+                if isinstance(enrollments, list):
+                    for enrollment in enrollments:
+                        if isinstance(enrollment, dict) and 'subject_id' in enrollment:
+                            subject_id = enrollment['subject_id']
+                            # Get subject details
+                            subject_data = sb_get('subjects', f'id=eq.{subject_id}&select=*')
+                            if isinstance(subject_data, list) and len(subject_data) > 0:
+                                subject = subject_data[0]
+                                # Get grade for this subject
+                                grade_data = sb_get('grades', f'student_subject_id=eq.{enrollment["id"]}&select=*')
+                                grade = None
+                                passed = False
+                                if isinstance(grade_data, list) and len(grade_data) > 0:
+                                    grade = grade_data[0].get('final_grade')
+                                    passed = grade_data[0].get('passed', False)
+
+                                search_results.append({
+                                    'student': student,
+                                    'subject': subject,
+                                    'enrollment': enrollment,
+                                    'final_grade': grade,
+                                    'passed': passed
+                                })
+
+    return render_template('professor_dashboard.html', search_results=search_results)
+
+
+# Admin User Management Routes
+@app.route('/admin/users')
+@login_required
+@admin_required
+def admin_users():
+    users = sb_get('users', 'select=*')
+    if not isinstance(users, list):
+        users = []
+    return render_template('admin_users.html', users=users)
+
+
+@app.route('/admin/users/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_create_user():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        role = request.form.get('role', 'student')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        cedula = request.form.get('cedula', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        level = request.form.get('level', '') if role == 'student' else None
+
+        if not username or not password:
+            flash('Usuario y contraseña son requeridos.', 'danger')
+            return render_template('admin_user_form.html', action='create')
+
+        # Check if username already exists
+        existing = sb_get('users', f'username=eq.{username}&select=id')
+        if isinstance(existing, list) and len(existing) > 0:
+            flash('El nombre de usuario ya existe.', 'danger')
+            return render_template('admin_user_form.html', action='create')
+
+        # Hash password
+        hashed_password = generate_password_hash(password)
+
+        # Create user
+        user_data = {
+            'username': username,
+            'password': hashed_password,
+            'role': role,
+            'first_name': first_name,
+            'last_name': last_name,
+            'cedula': cedula,
+            'email': email,
+            'phone': phone,
+            'level': level
+        }
+
+        result = sb_post('users', user_data)
+        if isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
+            flash('Usuario creado exitosamente.', 'success')
+            return redirect(url_for('admin_users'))
+        else:
+            flash(f'Error al crear usuario: {result}', 'danger')
+
+    return render_template('admin_user_form.html', action='create')
+
+
+@app.route('/admin/users/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_user(id):
+    # Get user data
+    user_data = sb_get('users', f'id=eq.{id}&select=*')
+    if not isinstance(user_data, list) or len(user_data) == 0:
+        flash('Usuario no encontrado.', 'danger')
+        return redirect(url_for('admin_users'))
+    user = user_data[0]
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        role = request.form.get('role', 'student')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        cedula = request.form.get('cedula', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        level = request.form.get('level', '') if role == 'student' else None
+
+        if not username:
+            flash('El nombre de usuario es requerido.', 'danger')
+            return render_template('admin_user_form.html', user=user, action='edit')
+
+        # Check if username already exists (excluding current user)
+        existing = sb_get('users', f'username=eq.{username}&id=neq.{id}&select=id')
+        if isinstance(existing, list) and len(existing) > 0:
+            flash('El nombre de usuario ya existe.', 'danger')
+            return render_template('admin_user_form.html', user=user, action='edit')
+
+        # Prepare update data
+        update_data = {
+            'username': username,
+            'first_name': first_name,
+            'last_name': last_name,
+            'cedula': cedula,
+            'email': email,
+            'phone': phone,
+            'role': role,
+            'level': level
+        }
+
+        # Only update password if provided
+        if password:
+            update_data['password'] = generate_password_hash(password)
+
+        result = sb_patch('users', 'id', id, update_data)
+        if hasattr(result, 'status_code') and result.status_code in [200, 204]:
+            flash('Usuario actualizado exitosamente.', 'success')
+            return redirect(url_for('admin_users'))
+        else:
+            flash(f'Error al actualizar usuario: {result}', 'danger')
+
+    return render_template('admin_user_form.html', user=user, action='edit')
+
+
+@app.route('/admin/users/delete/<int:id>')
+@login_required
+@admin_required
+def admin_delete_user(id):
+    # Delete user (this will cascade to related records due to foreign keys)
+    result = sb_delete('users', 'id', id)
+    if hasattr(result, 'status_code') and result.status_code in [200, 204]:
+        flash('Usuario eliminado exitosamente.', 'success')
+    else:
+        flash(f'Error al eliminar usuario: {result}', 'danger')
+    return redirect(url_for('admin_users'))
+
+
+# Grade Entry Route for Professors
+@app.route('/professor/grade/enter', methods=['POST'])
+@login_required
+@professor_required
+def professor_enter_grade():
+    enrollment_id = request.form.get('enrollment_id')
+    final_grade = request.form.get('final_grade')
+
+    if not enrollment_id or not final_grade:
+        flash('ID de inscripción y nota final son requeridos.', 'danger')
+        return redirect(url_for('professor_dashboard'))
+
+    try:
+        final_grade = float(final_grade)
+        if final_grade < 0 or final_grade > 100:
+            flash('La nota debe estar entre 0 y 100.', 'danger')
+            return redirect(url_for('professor_dashboard'))
+    except ValueError:
+        flash('La nota debe ser un número válido.', 'danger')
+        return redirect(url_for('professor_dashboard'))
+
+    # Get the enrollment to verify it belongs to a student
+    enrollment = sb_get('student_subjects', f'id=eq.{enrollment_id}&select=*')
+    if not isinstance(enrollment, list) or len(enrollment) == 0:
+        flash('Inscripción no encontrada.', 'danger')
+        return redirect(url_for('professor_dashboard'))
+
+    enrollment = enrollment[0]
+
+    # Get student level to determine passing grade
+    student_id = enrollment['student_id']
+    student_data = sb_get('users', f'id=eq.{student_id}&select=level')
+    student_level = 'segundo_nivel'  # default
+    if isinstance(student_data, list) and len(student_data) > 0:
+        student_level = student_data[0].get('level', 'segundo_nivel')
+
+    # Determine if passed based on level
+    if student_level in ['primaria', 'segundo_nivel']:
+        passed = final_grade >= 65
+    elif student_level == 'tercer_nivel':
+        passed = final_grade >= 70
+    else:
+        passed = final_grade >= 65  # default
+
+    # Check if grade already exists
+    existing_grade = sb_get('grades', f'student_subject_id=eq.{enrollment_id}&select=id')
+    if isinstance(existing_grade, list) and len(existing_grade) > 0:
+        # Update existing grade
+        grade_data = {
+            'final_grade': final_grade,
+            'passed': passed
+        }
+        result = sb_patch('grades', 'id', existing_grade[0]['id'], grade_data)
+    else:
+        # Create new grade
+        grade_data = {
+            'student_subject_id': enrollment_id,
+            'final_grade': final_grade,
+            'passed': passed,
+            'graded_by': current_user.id
+        }
+        result = sb_post('grades', grade_data)
+
+    if isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
+        flash('Nota guardada exitosamente.', 'success')
+    else:
+        flash(f'Error al guardar nota: {result}', 'danger')
+
+    return redirect(url_for('professor_dashboard'))
 
 
 handler = app
