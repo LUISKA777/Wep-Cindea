@@ -55,9 +55,9 @@
                     <div class="text-end">
                         {% if result.student.level %}
                         <span class="badge bg-info text-dark">
-                            {% if result.student.level == 'primaria' %}primer nivel
+                            {% if result.student.level == 'primaria' %}Primer nivel
                             {% elif result.student.level == 'segundo_nivel' %}Segundo nivel
-                            {% elif result.student.level == 'tercer_nivel' %}tercer nivel
+                            {% elif result.student.level == 'tercer_nivel' %}Tercer nivel
                             {% else %}{{ result.student.level }}
                             {% endif %}
                         </span>
