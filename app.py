@@ -618,6 +618,8 @@ def login():
                     return redirect(url_for('student_dashboard'))
                 elif user.is_professor:
                     return redirect(url_for('professor_dashboard'))
+                elif user.is_superadmin:
+                    return redirect(url_for('admin_dashboard'))
             else:
                 flash('Credenciales incorrectas.', 'danger')
         else:
