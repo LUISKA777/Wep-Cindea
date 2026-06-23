@@ -51,7 +51,16 @@ CREATE INDEX IF NOT EXISTS idx_users_cedula ON users(cedula);
 CREATE INDEX IF NOT EXISTS idx_student_subjects_student ON student_subjects(student_id);
 CREATE INDEX IF NOT EXISTS idx_grades_student_subject ON grades(student_subject_id);
 
-INSERT INTO users (username, password, role, first_name, last_name, cedula, email, phone, level) VALUES ('208480379', 'CINdea.net', 'superadmin', '', '', '', '', '', NULL);
+INSERT INTO users (username, password, role, first_name, last_name, cedula, email, phone, level) VALUES ('208480379', 'CINdea.net', 'superadmin', '', '', '', '', '', NULL)
+ON CONFLICT (username) DO UPDATE
+SET password = EXCLUDED.password,
+    role = EXCLUDED.role,
+    first_name = EXCLUDED.first_name,
+    last_name = EXCLUDED.last_name,
+    cedula = EXCLUDED.cedula,
+    email = EXCLUDED.email,
+    phone = EXCLUDED.phone,
+    level = EXCLUDED.level;
 
 -- ============================================================
 -- INSTRUCCIONES:
