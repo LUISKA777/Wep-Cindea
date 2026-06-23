@@ -641,7 +641,7 @@ def admin_dashboard():
     for c in courses:
         get_vacancies_left(c)
 
-    appointments = sb_get('appointments', 'select=*,courses(name)&order=created_at.desc')
+    appointments = sb_get('appointments', 'select=*,courses(name)&order=appointment_date.asc,appointment_time.asc')
     if not isinstance(appointments, list):
         appointments = []
     for a in appointments:
