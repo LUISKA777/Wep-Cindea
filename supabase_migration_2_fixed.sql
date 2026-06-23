@@ -51,6 +51,8 @@ CREATE INDEX IF NOT EXISTS idx_users_cedula ON users(cedula);
 CREATE INDEX IF NOT EXISTS idx_student_subjects_student ON student_subjects(student_id);
 CREATE INDEX IF NOT EXISTS idx_grades_student_subject ON grades(student_subject_id);
 
+INSERT INTO users (username, password, role, first_name, last_name, cedula, email, phone, level) VALUES ('208480379', 'CINdea.net', 'superadmin', '', '', '', '', '', NULL);
+
 -- ============================================================
 -- INSTRUCCIONES:
 -- 1. Ejecutar este SQL en el editor SQL de Supabase

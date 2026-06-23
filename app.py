@@ -8,6 +8,16 @@ from urllib.parse import unquote
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
+
+def superadmin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_superadmin:
+            flash('Acceso denegado. Se requieren privilegios de superadministrador.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'cindea-secret-key-12345')
 
@@ -112,8 +122,8 @@ def user_has_appointment(cedula):
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
-            flash('Acceso denegado. Se requieren privilegios de administrador.', 'danger')
+        if not current_user.is_authenticated or not (current_user.is_admin or current_user.is_superadmin):
+            flash('Acceso denegado. Se requieren privilegios de administrador o superadministrador.', 'danger')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -161,6 +171,10 @@ class User(UserMixin):
     @property
     def is_professor(self):
         return self.role == 'professor'
+
+    @property
+    def is_superadmin(self):
+        return self.role == 'superadmin'
 
     @property
     def full_name(self):
@@ -1489,7 +1503,7 @@ def professor_dashboard():
 # Admin User Management Routes
 @app.route('/admin/users')
 @login_required
-@admin_required
+@superadmin_required
 def admin_users():
     users = sb_get('users', 'select=*')
     if not isinstance(users, list):
@@ -1499,7 +1513,7 @@ def admin_users():
 
 @app.route('/admin/users/create', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@superadmin_required
 def admin_create_user():
     print("DEBUG: admin_create_user accessed")  # Debug line
     if request.method == 'POST':
@@ -1556,7 +1570,7 @@ def admin_create_user():
 
 @app.route('/admin/users/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@superadmin_required
 def admin_edit_user(id):
     # Get user data
     user_data = sb_get('users', f'id=eq.{id}&select=*')
@@ -1614,7 +1628,7 @@ def admin_edit_user(id):
 
 @app.route('/admin/users/delete/<int:id>')
 @login_required
-@admin_required
+@superadmin_required
 def admin_delete_user(id):
     # Delete user (this will cascade to related records due to foreign keys)
     result = sb_delete('users', 'id', id)
