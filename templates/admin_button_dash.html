@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Panel de Super Administración - CINDEA{% endblock %}
+{% block title %}Panel de Administración - CINDEA{% endblock %}
 {% block content %}
 <div class="admin-hub">
     <div class="admin-hub-header text-center mb-5">
-        <span class="admin-hub-eyebrow"><i class="bi bi-shield-lock-fill me-2"></i>Super Administración</span>
+        <span class="admin-hub-eyebrow"><i class="bi bi-shield-lock-fill me-2"></i>{{ 'Super Administración' if current_user.is_superadmin else 'Administración' }}</span>
         <h1 class="admin-hub-title">Panel de Control</h1>
-        <p class="admin-hub-subtitle">Seleccione un área para gestionar. Acceso completo al sistema.</p>
+        <p class="admin-hub-subtitle">Seleccione un área para gestionar.</p>
     </div>
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -36,6 +36,7 @@
             </a>
         </div>
 
+        {% if current_user.is_superadmin %}
         <div class="col">
             <a href="{{ url_for('admin_create_user') }}" class="hub-card text-decoration-none">
                 <div class="hub-icon hub-icon-amber"><i class="bi bi-person-plus"></i></div>
@@ -44,6 +45,7 @@
                 <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
             </a>
         </div>
+        {% endif %}
 
         <div class="col">
             <a href="{{ url_for('admin_posts') }}" class="hub-card text-decoration-none">

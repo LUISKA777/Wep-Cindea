@@ -635,11 +635,10 @@ def logout():
 @app.route('/admin')
 @login_required
 def admin_dashboard():
-    # Superadmin: panel limpio basado en botones (sin tabla de cursos)
-    if current_user.is_authenticated and current_user.is_superadmin:
+    # Admin y Superadmin: panel limpio basado en botones (sin tabla de cursos)
+    if current_user.is_authenticated and (current_user.is_admin or current_user.is_superadmin):
         return render_template('admin_button_dash.html')
-    # Admin normal: panel tradicional con tabla de cursos y citas
-    return admin_courses_dashboard()
+    return redirect(url_for('login'))
 
 
 @app.route('/admin/cursos')
