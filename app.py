@@ -635,10 +635,17 @@ def logout():
 @app.route('/admin')
 @login_required
 def admin_dashboard():
-    # If user is admin but not superadmin, show button-based dashboard
-    if current_user.is_authenticated and current_user.is_admin and not current_user.is_superadmin:
+    # Superadmin: panel limpio basado en botones (sin tabla de cursos)
+    if current_user.is_authenticated and current_user.is_superadmin:
         return render_template('admin_button_dash.html')
-    # For superadmins (or admins who are also superadmins) show the traditional dashboard
+    # Admin normal: panel tradicional con tabla de cursos y citas
+    return admin_courses_dashboard()
+
+
+@app.route('/admin/cursos')
+@login_required
+@admin_required
+def admin_courses_dashboard():
     courses = sb_get('courses', 'select=*')
     if not isinstance(courses, list):
         courses = []
@@ -1453,8 +1460,32 @@ def matricula_receipt(apt_id):
 
 @app.route('/horarios')
 def horarios():
-    """Página principal de horarios con botones para cada nivel"""
+    """Página principal de horarios con selector de nivel interactivo"""
     return render_template('horarios.html', levels=HORARIOS_LEVELS)
+
+
+@app.route('/api/horarios/<level>')
+def api_horarios_level(level):
+    """Devuelve en JSON los horarios de un nivel para cargarlos sin recargar la página"""
+    if level not in HORARIOS_LEVELS:
+        return {'error': 'Nivel no válido'}, 404
+
+    horarios = sb_get('horarios', f'level=eq.{level}&select=*&order=created_at.desc')
+    if not isinstance(horarios, list):
+        horarios = []
+
+    for h in horarios:
+        if h.get('photo_url') and h['photo_url'].startswith('/'):
+            h['photo_url'] = f"{request.url_root.rstrip('/')}{h['photo_url']}"
+        if h.get('created_at'):
+            h['created_at'] = h['created_at'].split('T')[0]
+
+    return {
+        'level': level,
+        'label': HORARIOS_LEVELS[level]['label'],
+        'horarios': horarios,
+        'can_manage': bool(current_user.is_authenticated and current_user.is_superadmin)
+    }
 
 
 @app.route('/horarios/<level>')

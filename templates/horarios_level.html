@@ -20,33 +20,29 @@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for horario in horarios %}
         <div class="col">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    {% if horario.photo_url %}
-                    <div class="ratio ratio-16x9 mb-3">
-                        <img src="{{ horario.photo_url }}" class="img-fluid rounded" alt="Horario {{ horario.name }}">
-                    </div>
-                    {% endif %}
-                    <h5 class="card-title">{{ horario.name }}</h5>
+            <div class="horario-card">
+                {% if horario.photo_url %}
+                <a href="{{ horario.photo_url }}" target="_blank" class="horario-thumb d-block">
+                    <img src="{{ horario.photo_url }}" alt="Horario {{ horario.name }}">
+                    <div class="horario-thumb-overlay"><i class="bi bi-zoom-in"></i></div>
+                </a>
+                {% endif %}
+                <div class="p-3 d-flex flex-column h-100">
+                    <h6 class="fw-bold mb-1">{{ horario.name }}</h6>
                     {% if horario.description %}
-                    <p class="card-text text-muted flex-grow-1">
-                        {{ horario.description }}
-                    </p>
+                    <p class="small text-muted flex-grow-1">{{ horario.description }}</p>
                     {% endif %}
-                    <div class="mt-auto">
-                        <small class="text-muted">
-                            Creado: {{ horario.created_at.split('T')[0] if horario.created_at else 'N/A' }}
-                        </small>
-                    </div>
+                    <small class="text-muted">
+                        Creado: {{ horario.created_at.split('T')[0] if horario.created_at else 'N/A' }}
+                    </small>
                     {% if current_user.is_superadmin %}
-                    <div class="mt-3">
+                    <div class="mt-3 d-flex gap-2">
                         <a href="{{ url_for('admin_edit_horario', id=horario.id) }}"
-                           class="btn btn-sm btn-outline-secondary me-2">
+                           class="btn btn-sm btn-outline-secondary">
                             <i class="bi-pencil"></i> Editar
                         </a>
                         <form action="{{ url_for('admin_delete_horario', id=horario.id) }}" method="POST"
-                              onsubmit="return confirm('¿Está seguro de que desea eliminar este horario?');"
-                              style="display: inline;">
+                              onsubmit="return confirm('¿Está seguro de que desea eliminar este horario?');">
                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                 <i class="bi-trash"></i> Eliminar
                             </button>

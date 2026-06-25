@@ -12,6 +12,10 @@
 
 body {
     background-color: var(--bg-deep);
+    background-image:
+        radial-gradient(circle at 15% 0%, rgba(6, 182, 212, 0.10), transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.08), transparent 45%);
+    background-attachment: fixed;
     color: var(--text-main);
     font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
     transition: all 0.3s ease;
@@ -56,6 +60,7 @@ body {
     border: 1px solid var(--glass-border) !important;
     border-radius: 16px !important;
     color: var(--text-main) !important;
+    box-shadow: 0 10px 30px -15px rgba(0,0,0,0.4);
     transition: all 0.3s ease;
 }
 
@@ -365,4 +370,300 @@ body {
 /* Badge text-dark override para fondo claro */
 .badge.bg-primary.text-dark {
     color: #0f172a !important;
+}
+
+/* ===================================================================
+   Super Admin Hub (panel de botones) — diseño moderno y limpio
+   =================================================================== */
+.admin-hub {
+    padding: 1.5rem 0 2rem;
+}
+
+.admin-hub-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+}
+
+.admin-hub-title {
+    font-weight: 800;
+    font-size: 2.4rem;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #f1f5f9, var(--accent-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.admin-hub-subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+.hub-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 1.75rem;
+    color: var(--text-main);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.hub-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hub-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 20px 40px -15px rgba(6, 182, 212, 0.25);
+}
+
+.hub-card:hover::before {
+    opacity: 1;
+}
+
+.hub-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    font-size: 1.6rem;
+    margin-bottom: 1.1rem;
+    flex-shrink: 0;
+}
+
+.hub-icon-cyan   { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; }
+.hub-icon-green  { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
+.hub-icon-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.hub-icon-amber  { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.hub-icon-pink   { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+.hub-icon-slate  { background: rgba(148, 163, 184, 0.15);color: #cbd5e1; }
+.hub-icon-red    { background: rgba(239, 68, 68, 0.15);  color: #f87171; }
+.hub-icon-danger { background: rgba(239, 68, 68, 0.18);  color: #fb7185; }
+
+.hub-card-title {
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+}
+
+.hub-card-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    flex-grow: 1;
+    margin-bottom: 0.75rem;
+}
+
+.hub-card-arrow {
+    align-self: flex-end;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-cyan);
+    transition: all 0.3s ease;
+}
+
+.hub-card:hover .hub-card-arrow {
+    background: var(--accent-cyan);
+    color: var(--bg-deep);
+    transform: translateX(3px);
+}
+
+.hub-card-danger:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 20px 40px -15px rgba(239, 68, 68, 0.25);
+}
+
+.hub-card-danger:hover .hub-card-arrow {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* ===================================================================
+   Horarios — selector de nivel interactivo + viewer
+   =================================================================== */
+.horarios-hero {
+    text-align: center;
+    padding: 1.5rem 0 2rem;
+}
+
+.level-select-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
+    margin-bottom: 2.25rem;
+}
+
+.level-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.level-pill i {
+    font-size: 1.1rem;
+}
+
+.level-pill:hover {
+    border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+}
+
+.level-pill.active {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 10px 25px -10px rgba(6, 182, 212, 0.6);
+}
+
+.horarios-panel {
+    min-height: 120px;
+}
+
+.horario-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.horario-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-cyan);
+}
+
+.horario-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    cursor: zoom-in;
+    background: rgba(255,255,255,0.03);
+}
+
+.horario-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.horario-thumb:hover img {
+    transform: scale(1.06);
+}
+
+.horario-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, 0.35);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    color: #fff;
+    font-size: 1.6rem;
+}
+
+.horario-thumb:hover .horario-thumb-overlay {
+    opacity: 1;
+}
+
+.horario-skeleton {
+    height: 220px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+/* Lightbox para imágenes de horario */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.lightbox-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-overlay img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.75rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.lightbox-close:hover {
+    background: var(--accent-cyan);
 }
