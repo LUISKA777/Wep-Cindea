@@ -96,6 +96,27 @@
 </div>
 
 <script>
+function updateExportLinks() {
+    const dateFilter = document.getElementById('date-filter').value;
+    const baseUrl = '{{ url_for('admin_matricula_citas') }}';
+
+    // CSV link
+    const csvLink = document.getElementById('export-csv');
+    let csvHref = baseUrl + '?format=csv';
+    if (dateFilter) {
+        csvHref += '&date=' + encodeURIComponent(dateFilter);
+    }
+    csvLink.href = csvHref;
+
+    // PDF link
+    const pdfLink = document.getElementById('export-pdf');
+    let pdfHref = baseUrl + '?format=pdf';
+    if (dateFilter) {
+        pdfHref += '&date=' + encodeURIComponent(dateFilter);
+    }
+    pdfLink.href = pdfHref;
+}
+
 async function updateAppointments() {
     try {
         const dateFilter = document.getElementById('date-filter').value;
@@ -199,8 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // The links will navigate directly to the export URLs
 });
 
-// Update every 10 seconds
-setInterval(updateAppointments, 10000);
+ // Update every 10 seconds
+ setInterval(updateAppointments, 10000);
 </script>
 </div>
 {% endblock %}
