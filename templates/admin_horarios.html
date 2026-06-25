@@ -65,9 +65,9 @@
                             <td>
                                 {% if horario.level == 'primer_nivel' %}
                                     <span class="badge bg-primary">Primer Nivel</span>
-                                {% elseif horario.level == 'segundo_nivel' %}
+                                {% elif horario.level == 'segundo_nivel' %}
                                     <span class="badge bg-secondary">Segundo Nivel</span>
-                                {% elseif horario.level == 'tercer_nivel' %}
+                                {% elif horario.level == 'tercer_nivel' %}
                                     <span class="badge bg-info">Tercer Nivel</span>
                                 {% else %}
                                     {{ horario.level }}
