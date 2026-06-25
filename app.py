@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 import os
 import requests as http
@@ -7,6 +7,8 @@ import pytz
 from urllib.parse import unquote
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+import csv
+import io
 
 
 def superadmin_required(f):
@@ -1630,15 +1632,55 @@ def admin_delete_horario(id):
 @login_required
 def api_admin_matricula_citas():
     # Ordenar por fecha y hora ascendente
-    appointments = sb_get('matricula_appointments', 'select=*&order=appointment_date.asc,appointment_time.asc')
+    date_filter = request.args.get('date')
+    params = 'order=appointment_date.asc,appointment_time.asc'
+    if date_filter:
+        params += f'&appointment_date=eq.{date_filter}'
+    appointments = sb_get('matricula_appointments', f'select=*&{params}')
     return format_appointment_data(appointments)
 
 @app.route('/admin/matricula-citas')
 @login_required
 def admin_matricula_citas():
-    # Ordenar por fecha y hora ascendente
-    appointments = sb_get('matricula_appointments', 'select=*&order=appointment_date.asc,appointment_time.asc')
+    date_filter = request.args.get('date')
+    format_type = request.args.get('format')
+    params = 'order=appointment_date.asc,appointment_time.asc'
+    if date_filter:
+        params += f'&appointment_date=eq.{date_filter}'
+    appointments = sb_get('matricula_appointments', f'select=*&{params}')
+    if not isinstance(appointments, list):
+        appointments = []
     appointments = format_appointment_data(appointments)
+
+    if format_type == 'csv':
+        si = io.StringIO()
+        cw = csv.writer(si)
+        cw.writerow(['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación'])
+        for a in appointments:
+            cycle_map = {
+                'primaria': '1er Nivel (Primaria)',
+                'segundo_nivel': '2do Nivel (7°-9°)',
+                'tercer_nivel': '3er Nivel (10°-11°)'
+            }
+            cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
+            cw.writerow([
+                a.get('student_name', ''),
+                a.get('student_cedula', ''),
+                a.get('student_phone', ''),
+                cycle_label,
+                a.get('appointment_date', ''),
+                a.get('appointment_time', ''),
+                a.get('created_at', '')
+            ])
+        output = si.getvalue()
+        si.close()
+        filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.csv'
+        return Response(
+            output,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment;filename={filename}'}
+        )
+
     return render_template('admin_matricula_citas.html', appointments=appointments)
 
 
