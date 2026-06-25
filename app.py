@@ -1654,77 +1654,88 @@ def admin_matricula_citas():
     appointments = format_appointment_data(appointments)
 
     if format_type == 'csv':
-        si = io.StringIO()
-        cw = csv.writer(si)
-        cw.writerow(['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación'])
-        for a in appointments:
-            cycle_map = {
-                'primaria': '1er Nivel (Primaria)',
-                'segundo_nivel': '2do Nivel (7°-9°)',
-                'tercer_nivel': '3er Nivel (10°-11°)'
-            }
-            cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
-            cw.writerow([
-                a.get('student_name', ''),
-                a.get('student_cedula', ''),
-                a.get('student_phone', ''),
-                cycle_label,
-                a.get('appointment_date', ''),
-                a.get('appointment_time', ''),
-                a.get('created_at', '')
-            ])
-        output = si.getvalue()
-        si.close()
-        filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.csv'
-        return Response(
-            output,
-            mimetype='text/csv',
-            headers={'Content-Disposition': f'attachment;filename={filename}'}
-        )
+        try:
+            si = io.StringIO()
+            cw = csv.writer(si)
+            cw.writerow(['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación'])
+            for a in appointments:
+                cycle_map = {
+                    'primaria': '1er Nivel (Primaria)',
+                    'segundo_nivel': '2do Nivel (7°-9°)',
+                    'tercer_nivel': '3er Nivel (10°-11°)'
+                }
+                cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
+                cw.writerow([
+                    a.get('student_name', ''),
+                    a.get('student_cedula', ''),
+                    a.get('student_phone', ''),
+                    cycle_label,
+                    a.get('appointment_date', ''),
+                    a.get('appointment_time', ''),
+                    a.get('created_at', '')
+                ])
+            output = si.getvalue()
+            si.close()
+            filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.csv'
+            return Response(
+                output,
+                mimetype='text/csv',
+                headers={'Content-Disposition': f'attachment;filename={filename}'}
+            )
+        except Exception as e:
+            print(f"Error generating CSV: {e}")
+            flash('Error al generar el CSV. Por favor, intente de nuevo.', 'danger')
+            return redirect(url_for('admin_matricula_citas'))
 
     elif format_type == 'pdf':
-        # Create PDF
-        pdf = FPDF()
-        pdf.add_page()
-        # Set font
-        pdf.set_font("Arial", size=10)
-        # Title
-        pdf.cell(0, 10, txt="Citas de Matrícula", ln=True, align='C')
-        pdf.ln(5)
-        # Header
-        col_widths = [40, 25, 30, 30, 30, 25, 30]  # Adjust as needed
-        headers = ['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación']
-        for i, header in enumerate(headers):
-            pdf.cell(col_widths[i], 10, header, border=1, align='C')
-        pdf.ln()
-        # Data rows
-        for a in appointments:
-            cycle_map = {
-                'primaria': '1er Nivel (Primaria)',
-                'segundo_nivel': '2do Nivel (7°-9°)',
-                'tercer_nivel': '3er Nivel (10°-11°)'
-            }
-            cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
-            row = [
-                a.get('student_name', ''),
-                a.get('student_cedula', ''),
-                a.get('student_phone', ''),
-                cycle_label,
-                a.get('appointment_date', ''),
-                a.get('appointment_time', ''),
-                a.get('created_at', '')
-            ]
-            for i, item in enumerate(row):
-                pdf.cell(col_widths[i], 10, str(item), border=1)
+        try:
+            # Create PDF
+            pdf = FPDF()
+            pdf.add_page()
+            # Set font
+            pdf.set_font("Arial", size=10)
+            # Title
+            pdf.cell(0, 10, txt="Citas de Matrícula", ln=True, align='C')
+            pdf.ln(5)
+            # Header
+            col_widths = [40, 25, 30, 30, 30, 25, 30]  # Adjust as needed
+            headers = ['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación']
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 10, header, border=1, align='C')
             pdf.ln()
-        # Output to string
-        pdf_output = pdf.output(dest='S').encode('latin-1')
-        # Create response
-        response = make_response(pdf_output)
-        filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.pdf'
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
-        return response
+            # Data rows
+            for a in appointments:
+                cycle_map = {
+                    'primaria': '1er Nivel (Primaria)',
+                    'segundo_nivel': '2do Nivel (7°-9°)',
+                    'tercer_nivel': '3er Nivel (10°-11°)'
+                }
+                cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
+                row = [
+                    a.get('student_name', ''),
+                    a.get('student_cedula', ''),
+                    a.get('student_phone', ''),
+                    cycle_label,
+                    a.get('appointment_date', ''),
+                    a.get('appointment_time', ''),
+                    a.get('created_at', '')
+                ]
+                for i, item in enumerate(row):
+                    pdf.cell(col_widths[i], 10, str(item), border=1)
+                pdf.ln()
+            # Output to string
+            pdf_output = pdf.output(dest='S').encode('latin-1')
+            # Create response
+            response = make_response(pdf_output)
+            filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.pdf'
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+            return response
+        except Exception as e:
+            # Log error for debugging (print to console)
+            print(f"Error generating PDF: {e}")
+            flash('Error al generar el PDF. Por favor, intente de nuevo.', 'danger')
+            return redirect(url_for('admin_matricula_citas'))
 
     return render_template('admin_matricula_citas.html', appointments=appointments, export_mode=False)
 
