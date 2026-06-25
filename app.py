@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, session, Response, make_response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 import os
 import requests as http
@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import csv
 import io
+from weasyprint import HTML, CSS
 
 
 def superadmin_required(f):
@@ -1681,7 +1682,21 @@ def admin_matricula_citas():
             headers={'Content-Disposition': f'attachment;filename={filename}'}
         )
 
-    return render_template('admin_matricula_citas.html', appointments=appointments)
+    elif format_type == 'pdf':
+        # Render the template to HTML with export_mode=True to hide interactive elements
+        html_string = render_template('admin_matricula_citas.html', appointments=appointments, export_mode=True)
+        # Convert HTML to PDF
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
+
+        # Create response
+        response = make_response(pdf)
+        filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.pdf'
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
+
+    return render_template('admin_matricula_citas.html', appointments=appointments, export_mode=False)
 
 
 @app.route('/admin/matricula-citas/delete/<int:id>')

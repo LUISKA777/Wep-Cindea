@@ -2,15 +2,25 @@
 {% block title %}Citas de Matrícula - Admin{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<style>
+    .export-mode #export-controls,
+    .export-mode .export-action-column {
+        display: none !important;
+    }
+</style>
+<div class="{% if export_mode %}export-mode{% endif %}">
+    <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-primary">Citas de Matrícula</h2>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2" id="export-controls">
         <input type="date" id="date-filter" class="form-control form-control-sm">
         <button id="apply-filter" class="btn btn-sm btn-outline-primary">Filtrar</button>
         <a href="#" id="export-csv" class="btn btn-sm btn-success">
             <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar CSV (Excel)
+        </a>
+        <a href="#" id="export-pdf" class="btn btn-sm btn-danger">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Exportar PDF
         </a>
         <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
             <i class="bi bi-arrow-left me-2"></i>Volver al Panel
@@ -32,7 +42,7 @@
                         <th>Teléfono</th>
                         <th class="text-center">Ciclo</th>
                         <th class="text-center">Fecha y Hora</th>
-                        <th class="text-end pe-4">Acción</th>
+                        <th class="text-end pe-4 export-action-column">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="appointments-table-body">
@@ -65,7 +75,7 @@
                                 <div class="fw-bold">{{ apt.appointment_date }}</div>
                                 <div class="small text-muted">{{ apt.appointment_time }}</div>
                             </td>
-                            <td class="text-end pe-4">
+                            <td class="text-end pe-4 export-action-column">
                                 <span class="text-muted small me-2">{{ apt.created_at }}</span>
                                 <a href="{{ url_for('delete_matricula_cita', id=apt.id) }}"
                                    class="btn btn-sm btn-outline-secondary"
@@ -104,8 +114,8 @@ async function updateAppointments() {
 
         if (data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No hay citas de matrícula programadas.</td></tr>';
-            // Update export link
-            updateExportLink();
+            // Update export links
+            updateExportLinks();
             return;
         }
 
@@ -155,28 +165,18 @@ async function updateAppointments() {
         });
 
         tbody.innerHTML = html;
-        // Update export link
-        updateExportLink();
+        // Update export links
+        updateExportLinks();
     } catch (e) {
         console.error('Error updating appointments:', e);
     }
-}
-
-function updateExportLink() {
-    const dateFilter = document.getElementById('date-filter').value;
-    const exportLink = document.getElementById('export-csv');
-    let href = '{{ url_for('admin_matricula_citas') }}?format=csv';
-    if (dateFilter) {
-        href += '&date=' + encodeURIComponent(dateFilter);
-    }
-    exportLink.href = href;
 }
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Initial update
     updateAppointments();
-    updateExportLink();
+    updateExportLinks();
 
     // Apply filter button
     document.getElementById('apply-filter').addEventListener('click', function() {
@@ -194,9 +194,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('date-filter').addEventListener('change', function() {
         updateAppointments();
     });
+
+    // Export button handlers - these are just regular links, so no special handling needed
+    // The links will navigate directly to the export URLs
 });
 
 // Update every 10 seconds
 setInterval(updateAppointments, 10000);
 </script>
+</div>
 {% endblock %}
