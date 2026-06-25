@@ -16,16 +16,6 @@
         </div>
     </div>
 
-    {% if not configured %}
-    <div class="alert alert-warning">
-        <h4>Horarios no configurados</h4>
-        <p>Los horarios para este nivel aún no han sido configurados por el administrador.</p>
-        {% if opening_val and closing_val %}
-        <p>Período configurado: del {{ opening_val }} al {{ closing_val }}</p>
-        {% endif %}
-    </div>
-    {% endif %}
-
     {% if horarios %}
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for horario in horarios %}

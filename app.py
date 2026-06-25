@@ -1581,7 +1581,7 @@ def admin_edit_horario(id):
     return render_template('admin_horario_form.html', horario=horario, action='edit', levels=HORARIOS_LEVELS)
 
 
-@app.route('/admin/horarios/delete/<int:id>')
+@app.route('/admin/horarios/delete/<int:id>', methods=['POST'])
 @login_required
 @superadmin_required
 def admin_delete_horario(id):
