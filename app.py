@@ -1656,7 +1656,9 @@ def admin_matricula_citas():
     if format_type == 'csv':
         try:
             si = io.StringIO()
-            cw = csv.writer(si)
+            # Use quoting to handle commas within fields and lineterminator for consistency
+            cw = csv.writer(si, quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+            # Write header
             cw.writerow(['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación'])
             for a in appointments:
                 cycle_map = {
@@ -1665,7 +1667,7 @@ def admin_matricula_citas():
                     'tercer_nivel': '3er Nivel (10°-11°)'
                 }
                 cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
-                cw.writerow([
+                row = [
                     a.get('student_name', ''),
                     a.get('student_cedula', ''),
                     a.get('student_phone', ''),
@@ -1673,12 +1675,19 @@ def admin_matricula_citas():
                     a.get('appointment_date', ''),
                     a.get('appointment_time', ''),
                     a.get('created_at', '')
-                ])
-            output = si.getvalue()
+                ]
+                # Ensure each cell is string
+                row = [str(field) for field in row]
+                cw.writerow(row)
+            # Get CSV content and prepend UTF-8 BOM for proper Excel encoding
+            csv_content = si.getvalue()
             si.close()
+            # UTF-8 BOM
+            bomi = '﻿'
+            csv_with_bom = bomi + csv_content
             filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.csv'
             return Response(
-                output,
+                csv_with_bom,
                 mimetype='text/csv',
                 headers={'Content-Disposition': f'attachment;filename={filename}'}
             )
@@ -1692,14 +1701,24 @@ def admin_matricula_citas():
             # Create PDF
             pdf = FPDF()
             pdf.add_page()
+            # Set margins (left, top, right)
+            margin = 10
+            pdf.set_left_margin(margin)
+            pdf.set_top_margin(margin)
+            pdf.set_right_margin(margin)
             # Set font
             pdf.set_font("Arial", size=10)
             # Title
             pdf.cell(0, 10, txt="Citas de Matrícula", ln=True, align='C')
             pdf.ln(5)
-            # Header
-            col_widths = [40, 25, 30, 30, 30, 25, 30]  # Adjust as needed
+            # Calculate usable width
+            usable_width = pdf.w - 2 * margin  # page width minus left/right margins
+            # Define column proportions (adjust as needed)
+            # These should sum to 1.0
+            col_ratios = [0.30, 0.12, 0.15, 0.15, 0.12, 0.08, 0.08]  # Estudiante, Cédula, Teléfono, Ciclo, Fecha, Hora, Fecha de Creación
+            col_widths = [rat * usable_width for rat in col_ratios]
             headers = ['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación']
+            # Header
             for i, header in enumerate(headers):
                 pdf.cell(col_widths[i], 10, header, border=1, align='C')
             pdf.ln()
@@ -1721,15 +1740,20 @@ def admin_matricula_citas():
                     a.get('created_at', '')
                 ]
                 for i, item in enumerate(row):
-                    pdf.cell(col_widths[i], 10, str(item), border=1)
+                    text = str(item)
+                    # Optional: truncate overly long text to avoid overflow
+                    if len(text) > 50:
+                        text = text[:47] + '...'
+                    pdf.cell(col_widths[i], 10, text, border=1)
                 pdf.ln()
-            # Output to string (bytes or str)
+            # Output PDF as bytes
             pdf_output = pdf.output(dest='S')
-            # Ensure we have bytes for the response
+            # Ensure we have bytes (fpdf2 returns bytearray)
             if isinstance(pdf_output, str):
+                # Encode with replacement for non-latin-1 characters
                 pdf_output = pdf_output.encode('latin-1', 'replace')
             # Create response
-            response = make_response(pdf_output)
+            response = make_response(bytes(pdf_output))
             filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.pdf'
             response.headers['Content-Type'] = 'application/pdf'
             response.headers['Content-Disposition'] = f'attachment; filename={filename}'
