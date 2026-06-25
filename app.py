@@ -635,6 +635,10 @@ def logout():
 @app.route('/admin')
 @login_required
 def admin_dashboard():
+    # If user is admin but not superadmin, show button-based dashboard
+    if current_user.is_authenticated and current_user.is_admin and not current_user.is_superadmin:
+        return render_template('admin_button_dash.html')
+    # For superadmins (or admins who are also superadmins) show the traditional dashboard
     courses = sb_get('courses', 'select=*')
     if not isinstance(courses, list):
         courses = []
@@ -1485,7 +1489,7 @@ def horarios_level(level):
 
 @app.route('/admin/horarios')
 @login_required
-@superadmin_required
+@admin_required
 def admin_horarios():
     """Panel de administración para gestionar horarios"""
     horarios = sb_get('horarios', 'select=*&order=level,created_at.desc')
@@ -1689,7 +1693,7 @@ def professor_dashboard():
 # Admin User Management Routes
 @app.route('/admin/users')
 @login_required
-@superadmin_required
+@admin_required
 def admin_users():
     users = sb_get('users', 'select=*')
     if not isinstance(users, list):

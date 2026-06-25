@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Panel de Administración - CINDEA{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center mb-4">
+        <h1 class="display-5">Panel de Administración</h1>
+        <p class="lead">Seleccione una área para administrar</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <!-- Cursos -->
+        <div class="col">
+            <a href="{{ url_for('admin_dashboard') }}" class="card h-100 shadow-sm text-decoration-none text-dark">
+                <div class="card-body d-flex flex-column align-items-start">
+                    <div class="mb-3">
+                        <i class="bi bi-book display-4 text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Cursos</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Administrar cursos, vacantes y horarios
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-primary btn-sm">Ir a Cursos</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Citas -->
+        <div class="col">
+            <a href="{{ url_for('admin_dashboard') }}" class="card h-100 shadow-sm text-decoration-none text-dark">
+                <div class="card-body d-flex flex-column align-items-start">
+                    <div class="mb-3">
+                        <i class="bi bi-calendar-check display-4 text-success"></i>
+                    </div>
+                    <h5 class="card-title">Citas</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Ver y gestionar citas de matriculación
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-success btn-sm">Ir a Citas</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Usuarios -->
+        <div class="col">
+            <a href="{{ url_for('admin_users') }}" class="card h-100 shadow-sm text-decoration-none text-dark">
+                <div class="card-body d-flex flex-column align-items-start">
+                    <div class="mb-3">
+                        <i class="bi bi-people display-4 text-info"></i>
+                    </div>
+                    <h5 class="card-title">Usuarios</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Administrar cuentas de usuarios y roles
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-info btn-sm">Ir a Usuarios</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Publicaciones -->
+        <div class="col">
+            <a href="{{ url_for('admin_posts') }}" class="card h-100 shadow-sm text-decoration-none text-dark">
+                <div class="card-body d-flex flex-column align-items-start">
+                    <div class="mb-3">
+                        <i class="bi bi-chat-left-quote display-4 text-warning"></i>
+                    </div>
+                    <h5 class="card-title">Publicaciones</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Gestionar noticias y anuncios
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-warning btn-sm">Ir a Publicaciones</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Matrículas -->
+        <div class="col">
+            <a href="{{ url_for('admin_matriculas') }}" class="card h-100 shadow-sm text-decoration-none text-dark">
+                <div class="card-body d-flex flex-column align-items-start">
+                    <div class="mb-3">
+                        <i class="bi bi-file-earmark-text display-4 text-secondary"></i>
+                    </div>
+                    <h5 class="card-title">Matrículas</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Configurar períodos y cupos de matrícula
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-secondary btn-sm">Ir a Matrículas</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Horarios -->
+        <div class="col">
+            <a href="{{ url_for('admin_horarios') }}" class="card h-100 shadow-sm text-decoration-none text-dark">
+                <div class="card-body d-flex flex-column align-items-start">
+                    <div class="mb-3">
+                        <i class="bi bi-clock display-4 text-danger"></i>
+                    </div>
+                    <h5 class="card-title">Horarios</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Gestión de horarios de atención por nivel
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-danger btn-sm">Ir a Horarios</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="mt-5 pt-3 border-top text-center">
+        <p class="text-muted">
+            <small>Solo se muestran botones de acceso rápido. Para ver listas detalladas, inicie sesión como superadministrador.</small>
+        </p>
+    </div>
+</div>
+{% endblock %}
