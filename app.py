@@ -1492,9 +1492,14 @@ def horarios_level(level):
 @admin_required
 def admin_horarios():
     """Panel de administración para gestionar horarios"""
-    horarios = sb_get('horarios', 'select=*&order=level,created_at.desc')
-    if not isinstance(horarios, list):
+    result = sb_get('horarios', 'select=*&order=level,created_at.desc')
+    if isinstance(result, dict) and 'error' in result:
+        flash(f'Error al cargar horarios: {result.get("text", "Error desconocido")}', 'danger')
         horarios = []
+    elif not isinstance(result, list):
+        horarios = []
+    else:
+        horarios = result
     return render_template('admin_horarios.html', horarios=horarios)
 
 
@@ -1521,11 +1526,13 @@ def admin_add_horario():
         }
 
         result = sb_post('horarios', horario_data)
-        if isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
+        if isinstance(result, dict) and 'error' in result:
+            flash(f'Error al agregar horario: {result["error"]}', 'danger')
+        elif isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
             flash('Horario agregado exitosamente.', 'success')
             return redirect(url_for('admin_horarios'))
         else:
-            flash(f'Error al agregar horario: {result}', 'danger')
+            flash('Error inesperado al agregar horario.', 'danger')
 
     return render_template('admin_horario_form.html', action='create', levels=HORARIOS_LEVELS)
 
@@ -1536,6 +1543,9 @@ def admin_add_horario():
 def admin_edit_horario(id):
     """Editar un horario existente"""
     horario_data = sb_get('horarios', f'id=eq.{id}&select=*')
+    if isinstance(horario_data, dict) and 'error' in horario_data:
+        flash(f'Error al obtener horario: {horario_data["error"]}', 'danger')
+        return redirect(url_for('admin_horarios'))
     if not isinstance(horario_data, list) or len(horario_data) == 0:
         flash('Horario no encontrado.', 'danger')
         return redirect(url_for('admin_horarios'))
@@ -1560,11 +1570,13 @@ def admin_edit_horario(id):
         }
 
         result = sb_patch('horarios', 'id', id, update_data)
-        if hasattr(result, 'status_code') and result.status_code in [200, 204]:
+        if isinstance(result, dict) and 'error' in result:
+            flash(f'Error al actualizar horario: {result["error"]}', 'danger')
+        elif hasattr(result, 'status_code') and result.status_code in [200, 204]:
             flash('Horario actualizado exitosamente.', 'success')
             return redirect(url_for('admin_horarios'))
         else:
-            flash(f'Error al actualizar horario: {result}', 'danger')
+            flash('Error inesperado al actualizar horario.', 'danger')
 
     return render_template('admin_horario_form.html', horario=horario, action='edit', levels=HORARIOS_LEVELS)
 
@@ -1575,10 +1587,12 @@ def admin_edit_horario(id):
 def admin_delete_horario(id):
     """Eliminar un horario"""
     result = sb_delete('horarios', 'id', id)
-    if hasattr(result, 'status_code') and result.status_code in [200, 204]:
+    if isinstance(result, dict) and 'error' in result:
+        flash(f'Error al eliminar horario: {result["error"]}', 'danger')
+    elif hasattr(result, 'status_code') and result.status_code in [200, 204]:
         flash('Horario eliminado exitosamente.', 'success')
     else:
-        flash(f'Error al eliminar horario: {result}', 'danger')
+        flash('Error inesperado al eliminar horario.', 'danger')
     return redirect(url_for('admin_horarios'))
 
 
