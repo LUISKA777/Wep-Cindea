@@ -1723,8 +1723,11 @@ def admin_matricula_citas():
                 for i, item in enumerate(row):
                     pdf.cell(col_widths[i], 10, str(item), border=1)
                 pdf.ln()
-            # Output to string
-            pdf_output = pdf.output(dest='S').encode('latin-1')
+            # Output to string (bytes or str)
+            pdf_output = pdf.output(dest='S')
+            # Ensure we have bytes for the response
+            if isinstance(pdf_output, str):
+                pdf_output = pdf_output.encode('latin-1', 'replace')
             # Create response
             response = make_response(pdf_output)
             filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.pdf'
