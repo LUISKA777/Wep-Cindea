@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import csv
 import io
-from fpdf import FPDF, XPos, YPos
+from fpdf import FPDF
 
 
 def superadmin_required(f):
@@ -1707,13 +1707,9 @@ def admin_matricula_citas():
             pdf.set_top_margin(margin)
             pdf.set_right_margin(margin)
             # Set font
-            pdf.set_font("Helvetica", size=10)
+            pdf.set_font("Arial", size=10)
             # Title
-            pdf.cell(
-                w=0, h=10, text="Citas de Matrícula",
-                new_x=XPos.LMARGIN, new_y=YPos.NEXT,
-                align="C"
-            )
+            pdf.cell(0, 10, txt="Citas de Matrícula", ln=True, align='C')
             pdf.ln(5)
             # Calculate usable width
             usable_width = pdf.w - 2 * margin  # page width minus left/right margins
@@ -1748,15 +1744,7 @@ def admin_matricula_citas():
                     # Optional: truncate overly long text to avoid overflow
                     if len(text) > 50:
                         text = text[:47] + '...'
-                    pdf.cell(
-
-                        w=col_widths[i], h=10, text=text,
-
-                        border=1,
-
-                        new_x=XPos.RIGHT, new_y=YPos.TOP
-
-                    )
+                    pdf.cell(col_widths[i], 10, text, border=1)
                 pdf.ln()
             # Output PDF as bytes
             pdf_output = pdf.output(dest='S')
