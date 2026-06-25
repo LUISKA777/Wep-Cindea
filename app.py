@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import csv
 import io
-from weasyprint import HTML, CSS
+from fpdf import FPDF
 
 
 def superadmin_required(f):
@@ -1683,14 +1683,44 @@ def admin_matricula_citas():
         )
 
     elif format_type == 'pdf':
-        # Render the template to HTML with export_mode=True to hide interactive elements
-        html_string = render_template('admin_matricula_citas.html', appointments=appointments, export_mode=True)
-        # Convert HTML to PDF
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
-
+        # Create PDF
+        pdf = FPDF()
+        pdf.add_page()
+        # Set font
+        pdf.set_font("Arial", size=10)
+        # Title
+        pdf.cell(0, 10, txt="Citas de Matrícula", ln=True, align='C')
+        pdf.ln(5)
+        # Header
+        col_widths = [40, 25, 30, 30, 30, 25, 30]  # Adjust as needed
+        headers = ['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación']
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 10, header, border=1, align='C')
+        pdf.ln()
+        # Data rows
+        for a in appointments:
+            cycle_map = {
+                'primaria': '1er Nivel (Primaria)',
+                'segundo_nivel': '2do Nivel (7°-9°)',
+                'tercer_nivel': '3er Nivel (10°-11°)'
+            }
+            cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
+            row = [
+                a.get('student_name', ''),
+                a.get('student_cedula', ''),
+                a.get('student_phone', ''),
+                cycle_label,
+                a.get('appointment_date', ''),
+                a.get('appointment_time', ''),
+                a.get('created_at', '')
+            ]
+            for i, item in enumerate(row):
+                pdf.cell(col_widths[i], 10, str(item), border=1)
+            pdf.ln()
+        # Output to string
+        pdf_output = pdf.output(dest='S').encode('latin-1')
         # Create response
-        response = make_response(pdf)
+        response = make_response(pdf_output)
         filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.pdf'
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = f'attachment; filename={filename}'
