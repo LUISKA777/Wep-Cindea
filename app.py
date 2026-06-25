@@ -1121,6 +1121,29 @@ MATRICULA_CYCLES = {
     }
 }
 
+# ─── Horarios (Primer, Segundo, Tercer nivel) ───────────────────────────────
+
+HORARIOS_LEVELS = {
+    'primer_nivel': {
+        'label': 'Primer Nivel',
+        'icon': 'bi-clock-history',
+        'color': 'primary',
+        'description': 'Horarios de atención para Primer Nivel'
+    },
+    'segundo_nivel': {
+        'label': 'Segundo Nivel',
+        'icon': 'bi-clock-history',
+        'color': 'secondary',
+        'description': 'Horarios de atención para Segundo Nivel'
+    },
+    'tercer_nivel': {
+        'label': 'Tercer Nivel',
+        'icon': 'bi-clock-history',
+        'color': 'info',
+        'description': 'Horarios de atención para Tercer Nivel'
+    }
+}
+
 def _get_cycle_availability(cycle):
     """Retorna (max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs)"""
     settings_data = sb_get('settings', 'select=*')
@@ -1186,6 +1209,34 @@ def _get_cycle_availability(cycle):
 
     matricula_configured = bool(opening_val or closing_val)
     return max_cupos, booked_count, remaining, matricula_configured, opening_val, closing_val, gs
+
+
+def _get_horarios_availability(level):
+    """Retorna (configured, opening_val, closing_val, gs) para horarios"""
+    settings_data = sb_get('settings', 'select=*')
+    gs = settings_data[0] if (isinstance(settings_data, list) and len(settings_data) > 0) else {}
+
+    # Mapeo de niveles a columnas de settings
+    level_key_map = {
+        'primer_nivel':      ('hor_primera_apertura',      'hor_primera_cierre'),
+        'segundo_nivel':     ('hor_segunda_apertura',     'hor_segunda_cierre'),
+        'tercer_nivel':      ('hor_tercera_apertura',     'hor_tercera_cierre'),
+    }
+    opening_key, closing_key = level_key_map.get(level, ('hor_primera_apertura', 'hor_primera_cierre'))
+
+    today_str = datetime.now(CR_TZ).date().isoformat()
+
+    # Obtener fechas desde settings
+    opening_val = gs.get(opening_key) or None
+    closing_val = gs.get(closing_key) or None
+
+    # Validar que las fechas no estén vencidas
+    if closing_val and closing_val < today_str:
+        if not opening_val or opening_val <= today_str:
+            opening_val, closing_val = None, None
+
+    configured = bool(opening_val or closing_val)
+    return configured, opening_val, closing_val, gs
 
 
 @app.route('/matricula/<cycle>', methods=['GET', 'POST'])
@@ -1392,6 +1443,139 @@ def matricula_receipt(apt_id):
     cycle = apt_details.get('cycle', 'primaria')
     info = MATRICULA_CYCLES.get(cycle, MATRICULA_CYCLES['primaria'])
     return render_template('matricula_receipt.html', appointment=apt_details, info=info)
+
+
+# ─── Horarios Rutas ────────────────────────────────────────────────────────
+
+@app.route('/horarios')
+def horarios():
+    """Página principal de horarios con botones para cada nivel"""
+    return render_template('horarios.html', levels=HORARIOS_LEVELS)
+
+
+@app.route('/horarios/<level>')
+def horarios_level(level):
+    """Muestra los horarios disponibles para un nivel específico"""
+    if level not in HORARIOS_LEVELS:
+        return "Nivel no válido", 404
+
+    info = HORARIOS_LEVELS[level]
+    configured, opening_val, closing_val, gs = _get_horarios_availability(level)
+
+    # Obtener horarios existentes para este nivel
+    horarios = sb_get('horarios', f'level=eq.{level}&select=*&order=created_at.desc')
+    if not isinstance(horarios, list):
+        horarios = []
+
+    # Procesar las URLs de las imágenes para asegurar que tengan el formato correcto
+    for h in horarios:
+        if h.get('photo_url'):
+            # Si es una ruta relativa, convertirla a URL absoluta
+            if h['photo_url'].startswith('/'):
+                h['photo_url'] = f"{request.url_root.rstrip('/')}{h['photo_url']}"
+
+    return render_template('horarios_level.html',
+                         level=level,
+                         info=info,
+                         horarios=horarios,
+                         configured=configured,
+                         opening_val=opening_val,
+                         closing_val=closing_val)
+
+
+@app.route('/admin/horarios')
+@login_required
+@superadmin_required
+def admin_horarios():
+    """Panel de administración para gestionar horarios"""
+    horarios = sb_get('horarios', 'select=*&order=level,created_at.desc')
+    if not isinstance(horarios, list):
+        horarios = []
+    return render_template('admin_horarios.html', horarios=horarios)
+
+
+@app.route('/admin/horarios/add', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def admin_add_horario():
+    """Agregar un nuevo horario"""
+    if request.method == 'POST':
+        level = request.form.get('level')
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        photo_url = request.form.get('photo_url', '').strip()
+
+        if not level or not name:
+            flash('Nivel y nombre son requeridos.', 'danger')
+            return render_template('admin_horario_form.html', action='create', levels=HORARIOS_LEVELS)
+
+        horario_data = {
+            'level': level,
+            'name': name,
+            'description': description,
+            'photo_url': photo_url if photo_url else None
+        }
+
+        result = sb_post('horarios', horario_data)
+        if isinstance(result, list) or (isinstance(result, dict) and 'id' in result):
+            flash('Horario agregado exitosamente.', 'success')
+            return redirect(url_for('admin_horarios'))
+        else:
+            flash(f'Error al agregar horario: {result}', 'danger')
+
+    return render_template('admin_horario_form.html', action='create', levels=HORARIOS_LEVELS)
+
+
+@app.route('/admin/horarios/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def admin_edit_horario(id):
+    """Editar un horario existente"""
+    horario_data = sb_get('horarios', f'id=eq.{id}&select=*')
+    if not isinstance(horario_data, list) or len(horario_data) == 0:
+        flash('Horario no encontrado.', 'danger')
+        return redirect(url_for('admin_horarios'))
+
+    horario = horario_data[0]
+
+    if request.method == 'POST':
+        level = request.form.get('level')
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        photo_url = request.form.get('photo_url', '').strip()
+
+        if not level or not name:
+            flash('Nivel y nombre son requeridos.', 'danger')
+            return render_template('admin_horario_form.html', horario=horario, action='edit', levels=HORARIOS_LEVELS)
+
+        update_data = {
+            'level': level,
+            'name': name,
+            'description': description,
+            'photo_url': photo_url if photo_url else None
+        }
+
+        result = sb_patch('horarios', 'id', id, update_data)
+        if hasattr(result, 'status_code') and result.status_code in [200, 204]:
+            flash('Horario actualizado exitosamente.', 'success')
+            return redirect(url_for('admin_horarios'))
+        else:
+            flash(f'Error al actualizar horario: {result}', 'danger')
+
+    return render_template('admin_horario_form.html', horario=horario, action='edit', levels=HORARIOS_LEVELS)
+
+
+@app.route('/admin/horarios/delete/<int:id>')
+@login_required
+@superadmin_required
+def admin_delete_horario(id):
+    """Eliminar un horario"""
+    result = sb_delete('horarios', 'id', id)
+    if hasattr(result, 'status_code') and result.status_code in [200, 204]:
+        flash('Horario eliminado exitosamente.', 'success')
+    else:
+        flash(f'Error al eliminar horario: {result}', 'danger')
+    return redirect(url_for('admin_horarios'))
 
 
 @app.route('/admin/matricula-citas/api')

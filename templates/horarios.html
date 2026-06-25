@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Horarios de Atención - CINDEA{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="text-center mb-4">
+                <h1 class="display-5">Horarios de Atención</h1>
+                <p class="lead">Seleccione el nivel educativo para ver los horarios disponibles</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        {% for level_key, level_info in levels.items() %}
+        <div class="col-md-4">
+            <a href="{{ url_for('horarios_level', level=level_key) }}"
+               class="card h-100 shadow-sm text-decoration-none">
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <i class="{{ level_info.icon }} display-4 text-{{ level_info.color }}"></i>
+                    </div>
+                    <h5 class="card-title">{{ level_info.label }}</h5>
+                    <p class="card-text flex-grow-1 text-muted">
+                        {{ level_info.description }}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top text-center">
+                    <span class="btn btn-outline-primary btn-sm">Ver Horarios</span>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <p class="text-muted">
+                <small>Los horarios son gestionados por el personal administrativo y se actualizan periódicamente.</small>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
