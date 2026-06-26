@@ -1063,7 +1063,7 @@ def format_appointment_data(appointments):
                 a['created_at'] = created_val.split('T')[0] + ' ' + created_val.split('T')[1][:5]
     return appointments
 
-@app.route('/admin/matriculas')
+@app.route('/admin/matriculas', methods=['GET', 'POST'])
 @login_required
 def admin_matriculas():
     if request.method == 'POST':
