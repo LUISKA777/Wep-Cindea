@@ -1524,7 +1524,7 @@ def horarios_level(level):
 
 @app.route('/admin/horarios')
 @login_required
-@admin_required
+@superadmin_required
 def admin_horarios():
     """Panel de administración para gestionar horarios"""
     result = sb_get('horarios', 'select=*&order=level,created_at.desc')
