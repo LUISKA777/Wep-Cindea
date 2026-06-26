@@ -4,4 +4,5 @@ requests==2.31.0
 python-dotenv==1.0.1
 pytz==2024.1
 werkzeug==3.0.1
-fpdf2==2.7.5openpyxl==3.1.2
+fpdf2==2.7.5
+openpyxl==3.1.2
