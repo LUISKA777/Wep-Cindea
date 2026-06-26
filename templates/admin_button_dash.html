@@ -27,6 +27,8 @@
             </a>
         </div>
 
+        {% if current_user.is_superadmin %}
+        {% if current_user.is_superadmin %}
         <div class="col">
             <a href="{{ url_for('admin_users') }}" class="hub-card text-decoration-none">
                 <div class="hub-icon hub-icon-purple"><i class="bi bi-people"></i></div>
@@ -35,6 +37,8 @@
                 <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
             </a>
         </div>
+        {% endif %}
+        {% endif %}
 
         {% if current_user.is_superadmin %}
         <div class="col">

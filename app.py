@@ -1935,7 +1935,7 @@ def professor_dashboard():
 # Admin User Management Routes
 @app.route('/admin/users')
 @login_required
-@admin_required
+@superadmin_required
 def admin_users():
     users = sb_get('users', 'select=*')
     if not isinstance(users, list):
