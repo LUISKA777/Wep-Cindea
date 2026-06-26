@@ -1647,8 +1647,8 @@ def api_admin_matricula_citas():
 def admin_matricula_citas():
     date_filter = request.args.get('date')
     format_type = request.args.get('format')
-    if format_type == 'excel' and not current_user.is_superadmin:
-        flash('Acceso denegado. Solo los superadministradores pueden exportar a Excel.', 'danger')
+    if format_type == 'excel' and not (current_user.is_admin or current_user.is_superadmin):
+        flash('Acceso denegado. Se requieren privilegios de administrador o superadministrador para exportar a Excel.', 'danger')
         return redirect(url_for('admin_matricula_citas'))
     params = 'order=appointment_date.asc,appointment_time.asc'
     if date_filter:
