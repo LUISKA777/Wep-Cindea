@@ -1745,6 +1745,7 @@ def admin_matricula_citas():
                 ]
                 for i, item in enumerate(row):
                     # Optional: truncate overly long text to avoid overflow
+                    text = str(item) if item is not None else ''
                     if len(text) > 50:
                         text = text[:47] + '...'
                     pdf.cell(

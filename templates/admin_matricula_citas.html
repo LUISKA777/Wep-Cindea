@@ -16,11 +16,8 @@
     <div class="d-flex gap-2" id="export-controls">
         <input type="date" id="date-filter" class="form-control form-control-sm">
         <button id="apply-filter" class="btn btn-sm btn-outline-primary">Filtrar</button>
-        <a href="#" id="export-csv" class="btn btn-sm btn-success">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar CSV (Excel)
-        </a>
-        <a href="#" id="export-pdf" class="btn btn-sm btn-danger">
-            <i class="bi bi-file-earmark-pdf me-1"></i>Exportar PDF
+        <a href="#" id="export-excel" class="btn btn-sm btn-success">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
         </a>
         <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
             <i class="bi bi-arrow-left me-2"></i>Volver al Panel
@@ -100,21 +97,13 @@ function updateExportLinks() {
     const dateFilter = document.getElementById('date-filter').value;
     const baseUrl = '{{ url_for('admin_matricula_citas') }}';
 
-    // CSV link
-    const csvLink = document.getElementById('export-csv');
-    let csvHref = baseUrl + '?format=csv';
+    // Excel link
+    const excelLink = document.getElementById('export-excel');
+    let excelHref = baseUrl + '?format=excel';
     if (dateFilter) {
-        csvHref += '&date=' + encodeURIComponent(dateFilter);
+        excelHref += '&date=' + encodeURIComponent(dateFilter);
     }
-    csvLink.href = csvHref;
-
-    // PDF link
-    const pdfLink = document.getElementById('export-pdf');
-    let pdfHref = baseUrl + '?format=pdf';
-    if (dateFilter) {
-        pdfHref += '&date=' + encodeURIComponent(dateFilter);
-    }
-    pdfLink.href = pdfHref;
+    excelLink.href = excelHref;
 }
 
 async function updateAppointments() {
