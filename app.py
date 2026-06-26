@@ -1744,7 +1744,6 @@ def admin_matricula_citas():
                     a.get('created_at', '')
                 ]
                 for i, item in enumerate(row):
-                    text = str(item)
                     # Optional: truncate overly long text to avoid overflow
                     if len(text) > 50:
                         text = text[:47] + '...'
@@ -1754,12 +1753,12 @@ def admin_matricula_citas():
 
                         border=1,
 
-                        new_x=XPos.RIGHT, new_y=YPos.TOP
+                        new_x=XPos.RIGHT, new_y=YPos.TOP,
 
                     )
                 pdf.ln()
             # Output PDF as bytes
-            pdf_output = pdf.output(dest='S')
+            pdf_output = pdf.output()
             # Ensure we have bytes (fpdf2 returns bytearray)
             if isinstance(pdf_output, str):
                 # Encode with replacement for non-latin-1 characters
