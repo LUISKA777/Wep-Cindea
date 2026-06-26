@@ -16,9 +16,11 @@
     <div class="d-flex gap-2" id="export-controls">
         <input type="date" id="date-filter" class="form-control form-control-sm">
         <button id="apply-filter" class="btn btn-sm btn-outline-primary">Filtrar</button>
+        {% if current_user.is_superadmin %}
         <a href="#" id="export-excel" class="btn btn-sm btn-success">
             <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
         </a>
+        {% endif %}
         <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
             <i class="bi bi-arrow-left me-2"></i>Volver al Panel
         </a>
