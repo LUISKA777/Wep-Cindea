@@ -10,6 +10,8 @@ from functools import wraps
 import csv
 import io
 from fpdf import FPDF, XPos, YPos
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
 
 
 def superadmin_required(f):
@@ -1776,6 +1778,62 @@ def admin_matricula_citas():
             flash('Error al generar el PDF. Por favor, intente de nuevo.', 'danger')
             return redirect(url_for('admin_matricula_citas'))
 
+    elif format_type == 'excel':
+        try:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Citas de Matrícula"
+            headers = ['Estudiante', 'Cédula', 'Teléfono', 'Ciclo', 'Fecha', 'Hora', 'Fecha de Creación']
+            ws.append(headers)
+            # style header
+            for cell in ws[1]:
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal='center')
+                cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
+            for a in appointments:
+                cycle_map = {
+                    'primaria': '1er Nivel (Primaria)',
+                    'segundo_nivel': '2do Nivel (7°-9°)',
+                    'tercer_nivel': '3er Nivel (10°-11°)'
+                }
+                cycle_label = cycle_map.get(a.get('cycle', ''), a.get('cycle', ''))
+                row = [
+                    a.get('student_name', ''),
+                    a.get('student_cedula', ''),
+                    a.get('student_phone', ''),
+                    cycle_label,
+                    a.get('appointment_date', ''),
+                    a.get('appointment_time', ''),
+                    a.get('created_at', '')
+                ]
+                ws.append([str(v) if v is not None else '' for v in row])
+            # Adjust column widths
+            for col in ws.columns:
+                max_length = 0
+                column = col[0].column_letter  # Get column name
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = (max_length + 2)
+                ws.column_dimensions[column].width = adjusted_width
+            # Save to bytes
+            from io import BytesIO
+            excel_file = BytesIO()
+            wb.save(excel_file)
+            excel_file.seek(0)
+            filename = f'citas_matricula_{date_filter if date_filter else datetime.now().date().isoformat()}.xlsx'
+            return Response(
+                excel_file.read(),
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                headers={'Content-Disposition': f'attachment;filename={filename}'}
+            )
+        except Exception as e:
+            print(f"Error generating Excel: {e}")
+            flash('Error al generar el archivo Excel. Por favor, intente de nuevo.', 'danger')
+            return redirect(url_for('admin_matricula_citas'))
     return render_template('admin_matricula_citas.html', appointments=appointments, export_mode=False)
 
 
