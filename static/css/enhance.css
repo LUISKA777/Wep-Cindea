@@ -187,49 +187,6 @@
     .shield-hero-enter { opacity: 1; transform: none; animation: none; }
 }
 
-/* =========================================================================
-   SILUETA DEL EDIFICIO — fondo decorativo en el hero
-   ========================================================================= */
-.hero-row {
-    position: relative;
-    overflow: hidden;
-}
-
-.building-silhouette {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1.5rem;
-    height: 50%;
-    min-height: 180px;
-    z-index: 0;
-    opacity: 0.22;
-    pointer-events: none;
-    background-image: url('../images/building-silhouette-real.png');
-    background-repeat: no-repeat;
-    background-position: bottom center;
-    background-size: contain;
-    -webkit-mask-image: linear-gradient(to top, black 45%, transparent 100%);
-    mask-image: linear-gradient(to top, black 45%, transparent 100%);
-    mix-blend-mode: screen;
-}
-
-.building-silhouette img {
-    display: none;
-}
-
-.hero-row > .row {
-    position: relative;
-    z-index: 1;
-}
-
-@media (max-width: 991.98px) {
-    .building-silhouette {
-        opacity: 0.12;
-        height: 32%;
-    }
-}
-
 /* --- Texto del navbar-brand con pequeño shimmer --- */
 .navbar-brand-text {
     background: linear-gradient(90deg, var(--accent-cyan), #67e8f9, var(--accent-cyan));
