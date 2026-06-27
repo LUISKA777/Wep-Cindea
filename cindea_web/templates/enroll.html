@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Inscripción - {{ course.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0">
+            <div class="card-header text-center py-3">
+                <h4 class="mb-0">Inscripción: {{ course.name }}</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert border text-center mb-4" style="background: rgba(7, 201, 235, 0.05);">
+                    <p class="mb-0 text-muted small">Por favor, ingresa tus datos para iniciar el proceso de matrícula.</p>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-bold">Nombre Completo</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Ej. Juan Pérez" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cedula" class="form-label fw-bold">Número de Cédula</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-card-heading"></i></span>
+                            <input type="text" class="form-control" id="cedula" name="cedula" placeholder="Ej. 1-1234-5678" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="phone" class="form-label fw-bold">Teléfono de Contacto</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="Ej. 80008000" required>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">Siguiente Paso <i class="bi bi-arrow-right ms-2"></i></button>
+                        <a href="{{ url_for('index') }}" class="btn btn-link text-muted text-center">Volver al inicio</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

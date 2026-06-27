@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Gestionar Posts - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestionar Publicaciones</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('add_post') }}" class="btn btn-success">Agregar Nueva Publicación</a>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Volver al Panel</a>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded p-3" style="background: var(--bg-slate); border: 1px solid var(--glass-border);">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border); color: var(--text-muted);">
+                    <th>Título</th>
+                    <th class="text-center">Estado</th>
+                    <th>Fecha</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <td class="fw-bold">{{ post.title }}</td>
+                    <td class="text-center">
+                        {% if post.published == true or post.published == 'true' %}
+                            <span class="badge bg-success">Publicado</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Borrador</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ post.created_at[:10] if post.created_at else '---' }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-sm btn-outline-primary me-2">Editar</a>
+                        <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('¿Seguro que deseas eliminar esta publicación?')">Eliminar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No hay publicaciones creadas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

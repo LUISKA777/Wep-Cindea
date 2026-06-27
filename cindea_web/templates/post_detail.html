@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} - Información CINDEA{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('posts') }}" class="text-cyan-link">
+                            <i class="bi bi-newspaper me-1"></i>Información
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active text-muted" aria-current="page">{{ post.title }}</li>
+                </ol>
+            </nav>
+
+            <!-- Artículo -->
+            <article class="post-detail-card">
+                <div class="post-detail-bar"></div>
+                <div class="post-detail-inner">
+
+                    <!-- Header -->
+                    <header class="post-detail-header">
+                        <span class="post-tag-sm"><i class="bi bi-newspaper me-1"></i>Noticia</span>
+                        <h1 class="post-detail-title">{{ post.title }}</h1>
+                        <div class="post-detail-meta">
+                            <span><i class="bi bi-calendar3 me-1"></i>
+                                {{ post.created_at[:10] if post.created_at else 'Fecha desconocida' }}
+                            </span>
+                        </div>
+                        <hr class="post-divider">
+                    </header>
+
+                    <!-- Contenido renderizado: saltos de línea → lista si empiezan con - o * -->
+                    <div class="post-detail-content" id="postContent">
+                        {{ post.content }}
+                    </div>
+                </div>
+            </article>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('posts') }}" class="btn-back">
+                    <i class="bi bi-arrow-left me-1"></i> Volver a Información
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    const el = document.getElementById('postContent');
+    if (!el) return;
+    const raw = el.innerText;
+
+    // Dividir por saltos de línea
+    const lines = raw.split('\n');
+
+    let html = '';
+    let inList = false;
+
+    lines.forEach(function(line) {
+        const trimmed = line.trim();
+
+        // Detectar ítem de lista: empieza con - , * , • , o número+punto
+        const isBullet = /^[-*•]\s+/.test(trimmed);
+        const isOrdered = /^\d+[.)]\s+/.test(trimmed);
+
+        if (isBullet) {
+            if (!inList) { html += '<ul class="post-list">'; inList = 'ul'; }
+            html += '<li>' + trimmed.replace(/^[-*•]\s+/, '') + '</li>';
+        } else if (isOrdered) {
+            if (!inList) { html += '<ol class="post-list">'; inList = 'ol'; }
+            html += '<li>' + trimmed.replace(/^\d+[.)]\s+/, '') + '</li>';
+        } else {
+            if (inList) { html += '</' + inList + '>'; inList = false; }
+            if (trimmed === '') {
+                html += '<br>';
+            } else {
+                html += '<p>' + trimmed + '</p>';
+            }
+        }
+    });
+    if (inList) html += '</' + inList + '>';
+
+    el.innerHTML = html;
+})();
+</script>
+
+<style>
+/* Breadcrumb */
+.breadcrumb { background: none; padding: 0; }
+.breadcrumb-item + .breadcrumb-item::before { color: var(--text-muted); }
+.text-cyan-link { color: var(--accent-cyan); text-decoration: none; }
+.text-cyan-link:hover { text-decoration: underline; }
+
+/* Card */
+.post-detail-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px -12px rgba(0,0,0,0.5);
+}
+.post-detail-bar {
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+}
+.post-detail-inner { padding: 2rem 2.2rem 2.2rem; }
+
+/* Header */
+.post-detail-header { margin-bottom: 1.5rem; }
+.post-tag-sm {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(6,182,212,0.12);
+    color: var(--accent-cyan);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: .25rem .75rem;
+    border-radius: 100px;
+    border: 1px solid rgba(6,182,212,0.25);
+    margin-bottom: 1rem;
+}
+.post-detail-title {
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.3;
+    margin-bottom: .7rem;
+    letter-spacing: -.3px;
+}
+.post-detail-meta {
+    color: var(--text-muted);
+    font-size: .85rem;
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+}
+.post-divider {
+    border-color: var(--glass-border);
+    margin-top: 1.2rem;
+    opacity: 1;
+}
+
+/* Contenido */
+.post-detail-content {
+    color: var(--text-main);
+    font-size: 1rem;
+    line-height: 1.8;
+}
+.post-detail-content p {
+    margin-bottom: .9rem;
+    color: var(--text-main);
+}
+.post-detail-content br { display: block; margin-bottom: .4rem; }
+
+/* Listas generadas */
+.post-list {
+    padding-left: 1.4rem;
+    margin-bottom: 1rem;
+}
+.post-list li {
+    margin-bottom: .45rem;
+    color: var(--text-main);
+    line-height: 1.7;
+}
+.post-list li::marker { color: var(--accent-cyan); }
+
+/* Botón volver */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: .5rem 1.2rem;
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .2s ease;
+}
+.btn-back:hover {
+    color: var(--accent-cyan);
+    border-color: rgba(6,182,212,0.4);
+    background: rgba(6,182,212,0.08);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .post-detail-inner { padding: 1.4rem 1.2rem; }
+}
+</style>
+{% endblock %}

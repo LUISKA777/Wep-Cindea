@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Panel de Administración - CINDEA{% endblock %}
+{% block content %}
+<div class="admin-hub">
+    <div class="admin-hub-header text-center mb-5">
+        <span class="admin-hub-eyebrow"><i class="bi bi-shield-lock-fill me-2"></i>{{ 'Super Administración' if current_user.is_superadmin else 'Administración' }}</span>
+        <h1 class="admin-hub-title">Panel de Control</h1>
+        <p class="admin-hub-subtitle">Seleccione un área para gestionar.</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="col">
+            <a href="{{ url_for('admin_courses_dashboard') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-cyan"><i class="bi bi-book"></i></div>
+                <h5 class="hub-card-title">Cursos</h5>
+                <p class="hub-card-text">Cupos, vacantes y citas de matrícula</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('admin_matricula_citas') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-green"><i class="bi bi-calendar-check"></i></div>
+                <h5 class="hub-card-title">Citas</h5>
+                <p class="hub-card-text">Ver y gestionar citas de matriculación</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        {% if current_user.is_superadmin %}
+        {% if current_user.is_superadmin %}
+        <div class="col">
+            <a href="{{ url_for('admin_users') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-purple"><i class="bi bi-people"></i></div>
+                <h5 class="hub-card-title">Usuarios</h5>
+                <p class="hub-card-text">Cuentas, roles y permisos del sistema</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% if current_user.is_superadmin %}
+        <div class="col">
+            <a href="{{ url_for('admin_create_user') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-amber"><i class="bi bi-person-plus"></i></div>
+                <h5 class="hub-card-title">Crear Usuario</h5>
+                <p class="hub-card-text">Registrar nuevas cuentas en el sistema</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="col">
+            <a href="{{ url_for('admin_posts') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-pink"><i class="bi bi-chat-left-quote"></i></div>
+                <h5 class="hub-card-title">Publicaciones</h5>
+                <p class="hub-card-text">Noticias y anuncios del sitio</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('admin_matriculas') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-slate"><i class="bi bi-file-earmark-text"></i></div>
+                <h5 class="hub-card-title">Matrículas</h5>
+                <p class="hub-card-text">Períodos y cupos de matrícula</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('admin_settings') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-cyan"><i class="bi bi-gear-fill"></i></div>
+                <h5 class="hub-card-title">Configuración</h5>
+                <p class="hub-card-text">Horarios y ajustes generales</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+
+        {% if current_user.is_superadmin %}
+        <div class="col">
+            <a href="{{ url_for('admin_horarios') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-red"><i class="bi bi-clock-history"></i></div>
+                <h5 class="hub-card-title">Horarios</h5>
+                <p class="hub-card-text">Gestión de horarios de atención por nivel</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="col">
+            <a href="{{ url_for('logout') }}" class="hub-card hub-card-danger text-decoration-none">
+                <div class="hub-icon hub-icon-danger"><i class="bi bi-box-arrow-right"></i></div>
+                <h5 class="hub-card-title">Cerrar Sesión</h5>
+                <p class="hub-card-text">Salir del panel de administración</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

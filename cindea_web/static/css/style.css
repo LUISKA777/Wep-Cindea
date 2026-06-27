@@ -1,0 +1,797 @@
+:root {
+    --bg-deep: #020617;
+    --bg-slate: #0f172a;
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --accent-cyan: #06b6d4;
+    --accent-purple: #a855f7;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --neon-glow: 0 0 15px rgba(6, 182, 212, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: var(--bg-deep);
+    background-image:
+        radial-gradient(circle at 15% 0%, rgba(6, 182, 212, 0.10), transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.08), transparent 45%);
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    transition: all 0.3s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--bg-slate);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cyan);
+}
+
+/* Navbar Glassmorphism */
+.navbar {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    font-weight: 800;
+    color: var(--accent-cyan) !important;
+    text-shadow: var(--neon-glow);
+}
+
+/* Cards & Tech Style */
+.card {
+    background: var(--bg-card) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    color: var(--text-main) !important;
+    box-shadow: 0 10px 30px -15px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    color: var(--accent-cyan) !important;
+    font-weight: 600 !important;
+}
+
+.hover-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.hover-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-cyan) !important;
+    box-shadow: var(--neon-glow) !important;
+}
+
+/* Buttons & Inputs */
+.btn-primary {
+    background-color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+    color: var(--bg-deep) !important;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    box-shadow: var(--neon-glow);
+    transform: scale(1.02);
+    background-color: #22d3ee !important;
+}
+
+.btn-outline-primary {
+    color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--accent-cyan) !important;
+    color: var(--bg-deep) !important;
+}
+
+.form-control, .form-select {
+    background-color: rgba(2, 6, 23, 0.5) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-main) !important;
+    border-radius: 10px;
+    padding: 0.6rem;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: rgba(2, 6, 23, 0.7) !important;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 0.25rem rgba(6, 182, 212, 0.25) !important;
+    color: var(--text-main) !important;
+}
+
+/* Tables */
+.table {
+    color: var(--text-main) !important;
+}
+
+.table thead th {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+    color: var(--text-main) !important;
+}
+
+.badge {
+    font-weight: 600;
+    padding: 0.5em 0.8em;
+    border-radius: 8px;
+}
+
+/* Typography */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-primary {
+    color: var(--accent-cyan) !important;
+}
+
+/* Ticket Styles */
+.ticket-container {
+    background: var(--bg-card);
+    border: 2px dashed var(--accent-cyan);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.ticket-header {
+    background: linear-gradient(45deg, var(--bg-slate), var(--accent-cyan));
+    color: var(--bg-deep);
+    border-radius: 18px 18px 0 0;
+}
+
+.ticket-body {
+    padding: 2rem;
+}
+
+.ticket-detail {
+    border-bottom: 1px solid var(--glass-border);
+    padding: 1rem 0;
+}
+
+.ticket-detail:last-child {
+    border-bottom: none;
+}
+
+.ticket-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ticket-value {
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.ticket-footer {
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 2px dashed var(--glass-border);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+/* Modal Dark Theme */
+.modal-content {
+    background-color: var(--bg-slate) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.modal-body .form-label {
+    color: var(--text-main) !important;
+}
+
+.modal-body .form-check-label {
+    color: var(--text-main) !important;
+}
+
+.form-check-input {
+    background-color: var(--bg-deep) !important;
+    border-color: var(--glass-border) !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background-color: white !important;
+        color: black !important;
+    }
+    .navbar, footer, .btn {
+        display: none !important;
+    }
+    .ticket-container {
+        border: 2px solid black !important;
+        background: white !important;
+        color: black !important;
+    }
+    .ticket-header {
+        background: #eee !important;
+        color: black !important;
+        border-bottom: 2px solid black !important;
+    }
+    .ticket-value, .ticket-label {
+        color: black !important;
+    }
+}
+
+/* ===== Modal overrides — fondo claro para formularios admin ===== */
+.modal-content {
+    background: #1e293b !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+.modal-header {
+    background: rgba(255,255,255,0.05) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.modal-body .form-control,
+.modal-body .form-select,
+.modal-body textarea {
+    background-color: #0f172a !important;
+    color: var(--text-main) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+.modal-body .form-control::placeholder,
+.modal-body textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.modal-body .form-label,
+.modal-body label,
+.modal-body h6 {
+    color: var(--text-main) !important;
+}
+
+/* Checkboxes en el modal — fondo y borde visibles */
+.modal-body .form-check-input {
+    background-color: #0f172a !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.modal-body .form-check-input:checked {
+    background-color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.modal-body .form-check-label {
+    color: var(--text-main) !important;
+}
+
+/* Contenedor de checkboxes niveles educativos */
+.modal-body .d-flex.flex-wrap.gap-3.p-2.border.rounded {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Card bg-light dentro del modal */
+.modal-body .card.bg-light {
+    background: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+
+.modal-body .card.bg-light .card-body {
+    background: transparent !important;
+}
+
+/* Inputs en páginas admin (fuera de modal también) */
+.form-control,
+.form-select {
+    background-color: #0f172a !important;
+    color: var(--text-main) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #0f172a !important;
+    color: var(--text-main) !important;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 0.2rem rgba(6,182,212,0.2) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* input-group-text (íconos en forms) */
+.input-group-text {
+    background-color: #1e293b !important;
+    color: var(--text-muted) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Tables en páginas admin */
+.table {
+    color: var(--text-main) !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+    color: var(--text-main) !important;
+    background-color: rgba(255,255,255,0.05) !important;
+}
+
+/* form-text (subtextos) */
+.form-text {
+    color: var(--text-muted) !important;
+}
+
+/* Badge text-dark override para fondo claro */
+.badge.bg-primary.text-dark {
+    color: #0f172a !important;
+}
+
+/* ===================================================================
+   Super Admin Hub (panel de botones) — diseño moderno y limpio
+   =================================================================== */
+.admin-hub {
+    padding: 1.5rem 0 2rem;
+}
+
+.admin-hub-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+}
+
+.admin-hub-title {
+    font-weight: 800;
+    font-size: 2.4rem;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #f1f5f9, var(--accent-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.admin-hub-subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+.hub-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 1.75rem;
+    color: var(--text-main);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.hub-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hub-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 20px 40px -15px rgba(6, 182, 212, 0.25);
+}
+
+.hub-card:hover::before {
+    opacity: 1;
+}
+
+.hub-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    font-size: 1.6rem;
+    margin-bottom: 1.1rem;
+    flex-shrink: 0;
+}
+
+.hub-icon-cyan   { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; }
+.hub-icon-green  { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
+.hub-icon-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.hub-icon-amber  { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.hub-icon-pink   { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+.hub-icon-slate  { background: rgba(148, 163, 184, 0.15);color: #cbd5e1; }
+.hub-icon-red    { background: rgba(239, 68, 68, 0.15);  color: #f87171; }
+.hub-icon-danger { background: rgba(239, 68, 68, 0.18);  color: #fb7185; }
+
+.hub-card-title {
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+}
+
+.hub-card-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    flex-grow: 1;
+    margin-bottom: 0.75rem;
+}
+
+.hub-card-arrow {
+    align-self: flex-end;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-cyan);
+    transition: all 0.3s ease;
+}
+
+.hub-card:hover .hub-card-arrow {
+    background: var(--accent-cyan);
+    color: var(--bg-deep);
+    transform: translateX(3px);
+}
+
+.hub-card-danger:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 20px 40px -15px rgba(239, 68, 68, 0.25);
+}
+
+.hub-card-danger:hover .hub-card-arrow {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* ===================================================================
+   Horarios — selector de nivel interactivo + viewer
+   =================================================================== */
+.horarios-hero {
+    text-align: center;
+    padding: 1.5rem 0 2rem;
+}
+
+.level-select-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
+    margin-bottom: 2.25rem;
+}
+
+.level-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.level-pill i {
+    font-size: 1.1rem;
+}
+
+.level-pill:hover {
+    border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+}
+
+.level-pill.active {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 10px 25px -10px rgba(6, 182, 212, 0.6);
+}
+
+.horarios-panel {
+    min-height: 120px;
+}
+
+.horario-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    overflow: hidden;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.horario-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-cyan);
+}
+
+.horario-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    cursor: zoom-in;
+    background: rgba(255,255,255,0.03);
+}
+
+.horario-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.horario-thumb:hover img {
+    transform: scale(1.06);
+}
+
+.horario-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, 0.35);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    color: #fff;
+    font-size: 1.6rem;
+}
+
+.horario-thumb:hover .horario-thumb-overlay {
+    opacity: 1;
+}
+
+.horario-skeleton {
+    height: 220px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+/* Lightbox para imágenes de horario */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.lightbox-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-overlay img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.75rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.lightbox-close:hover {
+    background: var(--accent-cyan);
+}
+
+/* ===================================================================
+   Navbar — íconos, legibilidad y diseño mobile-friendly
+   =================================================================== */
+.navbar-brand span {
+    font-size: 1.15rem;
+}
+
+.navbar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-main) !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem !important;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.navbar-nav .nav-link i {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+    width: 20px;
+    text-align: center;
+}
+
+.navbar-nav .nav-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--accent-cyan) !important;
+}
+
+.navbar-nav .nav-link:hover i {
+    color: var(--accent-cyan);
+}
+
+.navbar-nav .nav-link.active {
+    background: rgba(6, 182, 212, 0.12);
+    color: var(--accent-cyan) !important;
+}
+
+.nav-link-highlight {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 18px -8px rgba(6, 182, 212, 0.6);
+}
+
+.nav-link-highlight i {
+    color: #fff !important;
+}
+
+.nav-link-highlight:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.nav-link-logout {
+    color: #fda4af !important;
+}
+
+.nav-link-logout i {
+    color: #fda4af !important;
+}
+
+.nav-link-logout:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171 !important;
+}
+
+.navbar-toggler {
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 10px;
+    padding: 0.4rem 0.6rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.25) !important;
+}
+
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 14px;
+        border: 1px solid var(--glass-border);
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.85rem 1rem !important;
+        font-size: 1rem;
+    }
+
+    .navbar-nav .nav-item + .nav-item {
+        margin-top: 0.25rem;
+    }
+
+    .nav-link-highlight, .nav-link-logout {
+        margin-top: 0.5rem;
+    }
+}
+
+/* Mejor toque/clic en móvil para botones y tarjetas */
+@media (max-width: 575.98px) {
+    .hub-card, .horario-card {
+        padding-bottom: 1.25rem;
+    }
+
+    .level-pill {
+        padding: 0.65rem 1.1rem;
+        font-size: 0.9rem;
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .level-select-bar {
+        gap: 0.5rem;
+    }
+
+    .admin-hub-title {
+        font-size: 1.9rem;
+    }
+
+    .btn {
+        min-height: 40px;
+    }
+}

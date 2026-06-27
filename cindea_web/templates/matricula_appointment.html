@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Cita de Matrícula {{ info.label }} - CINDEA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header text-center py-3">
+                <i class="bi {{ info.icon }} me-2 text-{{ info.color }}"></i>
+                <h4 class="mb-0 d-inline fw-bold">Cita de Matrícula — {{ info.label }}</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert border text-center mb-4" style="background: rgba(6,182,212,0.1);">
+                    <p class="mb-0">
+                        <strong class="text-primary">{{ name }}</strong>
+                        (Cédula: {{ cedula }}, Tel: {{ phone }})<br>
+                        Selecciona el horario para tu cita de matrícula de <strong class="text-primary">{{ info.label }}</strong>.
+                    </p>
+                </div>
+
+                {% if not matricula_configured %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x fs-1 text-warning mb-3 d-block"></i>
+                    <h5 class="fw-bold mb-2">Matrícula no disponible aún</h5>
+                    <p class="text-muted mb-4">El periodo de matrícula para <strong>{{ info.label }}</strong> no ha sido habilitado todavía.<br>Consulte al personal administrativo o vuelva más tarde.</p>
+                    <a href="{{ url_for('matriculas') }}" class="btn btn-outline-primary">Ver fechas de matrícula</a>
+                </div>
+
+                {% elif dates %}
+                <form method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Selecciona la Fecha</label>
+                            <select class="form-select form-select-lg" name="date" id="dateSelect" required>
+                                <option value="" selected disabled>Elija una fecha...</option>
+                                {% for d in dates %}
+                                    <option value="{{ d.value }}">{{ d.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Selecciona la Hora</label>
+                            <select class="form-select form-select-lg" name="time" id="timeSelect" required disabled>
+                                <option value="" selected disabled>Primero elija la fecha...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold" id="submitBtn" disabled>
+                            Confirmar Cita <i class="bi bi-calendar-check ms-2"></i>
+                        </button>
+                        <a href="{{ url_for('matricula_enroll', cycle=cycle) }}" class="btn btn-link text-muted text-center">Volver</a>
+                    </div>
+                </form>
+
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-calendar-x fs-1 mb-3 d-block"></i>
+                    <p class="mb-0 fw-bold">No hay horarios disponibles en este momento.</p>
+                    <p class="small mt-2">Es posible que todos los horarios estén ocupados o el periodo haya finalizado.</p>
+                    <a href="{{ url_for('matriculas') }}" class="btn btn-outline-primary mt-3">Ver fechas de matrícula</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mapa exacto: fecha → horas disponibles para ESA fecha
+    const slotsByDate = {{ slots_by_date | tojson }};
+    const dateSelect = document.getElementById('dateSelect');
+    const timeSelect = document.getElementById('timeSelect');
+    const submitBtn  = document.getElementById('submitBtn');
+
+    function updateTimes() {
+        if (!dateSelect || !timeSelect) return;
+        const selectedDate = dateSelect.value;
+
+        // Limpiar opciones anteriores
+        timeSelect.innerHTML = '<option value="" selected disabled>Elija una hora...</option>';
+        timeSelect.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
+
+        if (!selectedDate || !slotsByDate[selectedDate]) return;
+
+        const hours = slotsByDate[selectedDate];
+        hours.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            timeSelect.appendChild(opt);
+        });
+
+        timeSelect.disabled = false;
+    }
+
+    function updateSubmit() {
+        if (submitBtn) {
+            submitBtn.disabled = !(dateSelect.value && timeSelect.value);
+        }
+    }
+
+    if (dateSelect) dateSelect.addEventListener('change', updateTimes);
+    if (timeSelect) timeSelect.addEventListener('change', updateSubmit);
+</script>
+{% endblock %}

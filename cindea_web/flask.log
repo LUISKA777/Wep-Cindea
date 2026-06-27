@@ -1,0 +1,52 @@
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.13:5000
+Press CTRL+C to quit
+127.0.0.1 - - [25/Jun/2026 00:21:10] "GET /admin/horarios HTTP/1.1" 302 -
+127.0.0.1 - - [25/Jun/2026 00:21:40] "POST /login HTTP/1.1" 302 -
+[2026-06-25 00:21:48,607] ERROR in app: Exception on /admin/horarios [GET]
+Traceback (most recent call last):
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\flask_login\utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\Cursos\cindea_web\app.py", line 128, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\Cursos\cindea_web\app.py", line 1533, in admin_horarios
+    return render_template('admin_horarios.html', horarios=horarios)
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\jinja2\loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\jinja2\environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\.venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Users\lr465\OneDrive\Documentos\PYTHON\Cursos\cindea_web\templates\admin_horarios.html", line 68, in template
+    {% elseif horario.level == 'segundo_nivel' %}
+    
+jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'elseif'. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+127.0.0.1 - - [25/Jun/2026 00:21:48] "GET /admin/horarios HTTP/1.1" 500 -
+127.0.0.1 - - [25/Jun/2026 00:22:46] "GET /admin/horarios HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jun/2026 00:22:58] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jun/2026 00:23:12] "POST /login HTTP/1.1" 302 -
+127.0.0.1 - - [25/Jun/2026 00:23:30] "GET /admin/horarios HTTP/1.1" 200 -

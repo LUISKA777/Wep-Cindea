@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cindea de Venecia{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body class="">
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Cindea Logo" class="me-2 rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid var(--accent-cyan);">
+                <span class="d-inline-block">Cindea de Venecia</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Abrir menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('index') else '' }}" href="{{ url_for('index') }}"><i class="bi bi-house-door-fill"></i><span>Inicio</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('posts') else '' }}" href="{{ url_for('posts') }}"><i class="bi bi-newspaper"></i><span>Información</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path == url_for('matriculas') else '' }}" href="{{ url_for('matriculas') }}"><i class="bi bi-pencil-square"></i><span>Matrículas</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path.startswith('/horarios') else '' }}" href="{{ url_for('horarios') }}"><i class="bi bi-clock-history"></i><span>Horarios</span></a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                      {% if current_user.is_admin or current_user.is_superadmin %}
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-highlight" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2"></i><span>Panel Admin</span></a>
+                        </li>
+                      {% elif current_user.is_student %}
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-highlight" href="{{ url_for('student_dashboard') }}"><i class="bi bi-mortarboard-fill"></i><span>Portal Estudiante</span></a>
+                        </li>
+                      {% elif current_user.is_professor %}
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-highlight" href="{{ url_for('professor_dashboard') }}"><i class="bi bi-easel-fill"></i><span>Portal Profesor</span></a>
+                        </li>
+                      {% endif %}
+                      <li class="nav-item">
+                          <a class="nav-link nav-link-logout" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i><span>Cerrar Sesión</span></a>
+                      </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-highlight" href="{{ url_for('login') }}"><i class="bi bi-box-arrow-in-right"></i><span>Iniciar Sesión</span></a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="py-5 mt-5 border-top text-center text-muted" style="background: var(--bg-slate); border-color: var(--glass-border) !important;">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5 class="text-primary fw-bold mb-3">Cindea de Venecia</h5>
+                    <p class="small">Comprometidos con la educación y el progreso de nuestra comunidad.</p>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5 class="text-primary fw-bold mb-3">Contacto</h5>
+                    <p class="small mb-1"><i class="bi bi-telephone-fill me-2"></i> 2472-1135</p>
+                    <p class="small"><i class="bi bi-geo-alt-fill me-2"></i> Venecia, San Carlos, Alajuela</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="text-primary fw-bold mb-3">Siguenos</h5>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="https://www.facebook.com/profile.php?id=100006788898976" target="_blank" class="text-muted fs-4"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-muted fs-4"><i class="bi bi-twitter-x"></i></a>
+                    </div>
+                </div>
+            </div>
+            <p class="mb-0 small opacity-50">&copy; 2026 Cindea de Venecia. Todos los derechos reservados.<br>
+                Creado por LK_Rodriguez</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

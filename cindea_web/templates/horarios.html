@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Horarios de Atención - CINDEA{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="horarios-hero">
+        <h1 class="display-6 fw-bold mb-2">Horarios de Atención</h1>
+        <p class="lead text-muted">Seleccione su nivel educativo para ver los horarios disponibles</p>
+    </div>
+
+    <div class="level-select-bar" id="levelSelectBar">
+        {% for level_key, level_info in levels.items() %}
+        <button type="button" class="level-pill" data-level="{{ level_key }}">
+            <i class="{{ level_info.icon }}"></i>
+            <span>{{ level_info.label }}</span>
+        </button>
+        {% endfor %}
+    </div>
+
+    <div class="horarios-panel" id="horariosPanel">
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-mouse2 display-5 d-block mb-3 opacity-50"></i>
+            Seleccione un nivel arriba para ver los horarios.
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox para ver la imagen del horario en grande -->
+<div class="lightbox-overlay" id="lightboxOverlay">
+    <div class="lightbox-close" id="lightboxClose"><i class="bi bi-x"></i></div>
+    <img src="" alt="Horario ampliado" id="lightboxImg">
+</div>
+
+<script>
+(function () {
+    const panel = document.getElementById('horariosPanel');
+    const pills = document.querySelectorAll('.level-pill');
+    const lightbox = document.getElementById('lightboxOverlay');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const cache = {};
+
+    function openLightbox(src) {
+        lightboxImg.src = src;
+        lightbox.classList.add('show');
+    }
+    function closeLightbox() {
+        lightbox.classList.remove('show');
+        lightboxImg.src = '';
+    }
+    document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', function (e) {
+        if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+    function renderHorarios(data) {
+        const items = data.horarios || [];
+        if (items.length === 0) {
+            panel.innerHTML = `
+                <div class="alert alert-info border-0 shadow-sm">
+                    <h5 class="mb-1"><i class="bi bi-info-circle me-2"></i>No hay horarios disponibles</h5>
+                    <p class="mb-0 text-muted">Aún no se han registrado horarios para ${data.label}.</p>
+                    ${data.can_manage ? `<a href="/admin/horarios/add" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-plus"></i> Agregar horario</a>` : ''}
+                </div>`;
+            return;
+        }
+
+        let html = `<div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>${data.label}</h4>
+                        ${data.can_manage ? `<a href="/admin/horarios/add" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> Nuevo</a>` : ''}
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">`;
+
+        items.forEach(function (h) {
+            html += `<div class="col">
+                <div class="horario-card">
+                    ${h.photo_url ? `
+                    <div class="horario-thumb" data-img="${h.photo_url}">
+                        <img src="${h.photo_url}" alt="Horario ${h.name}">
+                        <div class="horario-thumb-overlay"><i class="bi bi-zoom-in"></i></div>
+                    </div>` : ''}
+                    <div class="p-3">
+                        <h6 class="fw-bold mb-1">${h.name || ''}</h6>
+                        ${h.description ? `<p class="small text-muted mb-2">${h.description}</p>` : ''}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${h.created_at ? 'Actualizado: ' + h.created_at : ''}</small>
+                            ${data.can_manage ? `
+                            <div class="d-flex gap-1">
+                                <a href="/admin/horarios/edit/${h.id}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                                <form action="/admin/horarios/delete/${h.id}" method="POST" onsubmit="return confirm('¿Eliminar este horario?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        panel.innerHTML = html;
+
+        panel.querySelectorAll('.horario-thumb').forEach(function (el) {
+            el.addEventListener('click', function () {
+                openLightbox(el.getAttribute('data-img'));
+            });
+        });
+    }
+
+    function loadLevel(level) {
+        pills.forEach(p => p.classList.toggle('active', p.dataset.level === level));
+        panel.innerHTML = `<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div class="col"><div class="horario-skeleton"></div></div>
+            <div class="col"><div class="horario-skeleton"></div></div>
+            <div class="col"><div class="horario-skeleton"></div></div>
+        </div>`;
+
+        if (cache[level]) {
+            renderHorarios(cache[level]);
+            return;
+        }
+
+        fetch('/api/horarios/' + level)
+            .then(r => r.json())
+            .then(data => {
+                cache[level] = data;
+                renderHorarios(data);
+            })
+            .catch(() => {
+                panel.innerHTML = `<div class="alert alert-danger border-0">No se pudieron cargar los horarios. Intente de nuevo.</div>`;
+            });
+    }
+
+    pills.forEach(function (pill) {
+        pill.addEventListener('click', function () {
+            loadLevel(pill.dataset.level);
+        });
+    });
+
+    // Cargar automáticamente el primer nivel
+    if (pills.length > 0) {
+        loadLevel(pills[0].dataset.level);
+    }
+})();
+</script>
+{% endblock %}

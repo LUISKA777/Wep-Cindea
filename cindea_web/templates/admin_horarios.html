@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Administrar Horarios - CINDEA{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if not request.endpoint or 'admin_' not in request.endpoint %}active{% endif %}"
+                           href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi-house-door"></i> Panel Principal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'admin_horario' in request.endpoint %}active{% endif %}"
+                           href="{{ url_for('admin_horarios') }}">
+                            <i class="bi-clock-history"></i> Horarios
+                        </a>
+                    </li>
+                    <!-- Other admin menu items would go here -->
+                </ul>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Gestión de Horarios</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{{ url_for('admin_add_horario') }}" class="btn btn-sm btn-primary">
+                        <i class="bi-plus"></i> Nuevo Horario
+                    </a>
+                </div>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if horarios %}
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nivel</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Foto</th>
+                            <th>Fecha de Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for horario in horarios %}
+                        <tr>
+                            <td>{{ horario.id }}</td>
+                            <td>
+                                {% if horario.level == 'primer_nivel' %}
+                                    <span class="badge bg-primary">Primer Nivel</span>
+                                {% elif horario.level == 'segundo_nivel' %}
+                                    <span class="badge bg-secondary">Segundo Nivel</span>
+                                {% elif horario.level == 'tercer_nivel' %}
+                                    <span class="badge bg-info">Tercer Nivel</span>
+                                {% else %}
+                                    {{ horario.level }}
+                                {% endif %}
+                            </td>
+                            <td>{{ horario.name }}</td>
+                            <td>{{ horario.description|truncate(50) }}</td>
+                            <td>
+                                {% if horario.photo_url %}
+                                    <img src="{{ horario.photo_url }}" alt="Foto" class="img-thumbnail" style="max-width: 80px;">
+                                {% else %}
+                                    Sin foto
+                                {% endif %}
+                            </td>
+                            <td>{{ horario.created_at.split('T')[0] if horario.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_edit_horario', id=horario.id) }}"
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi-pencil"></i>
+                                </a>
+                                <form action="{{ url_for('admin_delete_horario', id=horario.id) }}" method="POST"
+                                      onsubmit="return confirm('¿Está seguro de que desea eliminar este horario?');"
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <h4>No hay horarios registrados</h4>
+                <p>Aún no se han registrado horarios en el sistema.</p>
+                <a href="{{ url_for('admin_add_horario') }}" class="btn btn-outline-primary">
+                    <i class="bi-plus"></i> Agregar Primer Horario
+                </a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}
