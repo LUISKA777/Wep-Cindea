@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row align-items-center mb-5 py-5">
-    <div class="col-lg-6 text-center text-lg-start">
+    <div class="col-lg-6 text-center text-lg-start reveal">
         <h1 class="display-3 fw-bold text-primary mb-3">Liderando el <span class="text-white">Futuro Educativo</span></h1>
         <p class="lead text-muted mb-4">En Cindea de Venecia, impulsamos tu crecimiento con educación accesible, moderna y de calidad. Únete a nuestra comunidad y transforma tu vida profesional.</p>
         <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
@@ -19,7 +19,11 @@
         </div>
     </div>
     <div class="col-lg-6 d-none d-lg-block text-center">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Cindea Logo" class="img-fluid rounded-4 logo-glow logo-tech-border" style="max-width: 80%;">
+        <div class="shield-hero shield-hero-enter" style="max-width: 80%; margin: 0 auto;">
+            <span class="shield-hero-halo"></span>
+            <span class="shield-hero-ring"></span>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Escudo Cindea de Venecia" class="shield-hero-img">
+        </div>
     </div>
 </div>
 
@@ -29,7 +33,7 @@
         <div class="mx-auto" style="width: 60px; height: 4px; background: var(--accent-cyan); border-radius: 2px;"></div>
     </div>
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100 overflow-hidden">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden reveal">
             <img src="{{ url_for('static', filename='images/educacion.jpg') }}" class="card-img-top" alt="Educación" style="height: 250px; object-fit: cover;">
             <div class="card-body p-4">
                 <h4 class="fw-bold text-primary mb-3">¿Quiénes Somos?</h4>
@@ -38,7 +42,7 @@
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100 overflow-hidden">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden reveal reveal-delay-1">
             <img src="{{ url_for('static', filename='images/comunidad.jpg') }}" class="card-img-top" alt="Comunidad" style="height: 250px; object-fit: cover;">
             <div class="card-body p-4">
                 <h4 class="fw-bold text-primary mb-3">Nuestra Misión</h4>
@@ -48,7 +52,7 @@
     </div>
 </div>
 
-<div class="row mb-5 py-5 bg-slate rounded-4 gx-5 align-items-center" style="background-color: var(--bg-slate); border: 1px solid var(--glass-border);">
+<div class="row mb-5 py-5 bg-slate rounded-4 gx-5 align-items-center reveal" style="background-color: var(--bg-slate); border: 1px solid var(--glass-border);">
     <div class="col-lg-6">
         <img src="{{ url_for('static', filename='images/vision.jpg') }}" class="img-fluid rounded-4 shadow" alt="Visión" style="width: 100%; max-height: 400px; object-fit: cover;">
     </div>
@@ -96,7 +100,7 @@
         {% if courses %}
             {% for course in courses %}
             <div class="col-md-4">
-                <div class="card h-100 shadow-sm hover-card" style="border-left: 4px solid var(--accent-blue) !important; border-top: none; border-right: none; border-bottom: none;">
+                <div class="card h-100 shadow-sm hover-card reveal reveal-delay-{{ (loop.index0 % 4) + 1 }}" style="border-left: 4px solid var(--accent-blue) !important; border-top: none; border-right: none; border-bottom: none;">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-2 gap-2">
                             <span class="badge text-white fw-bold px-2 py-1" style="background: var(--accent-blue); font-size: 0.7rem; letter-spacing:0.5px;">
@@ -132,7 +136,7 @@
     </div>
 
     <!-- Bloque de acceso rápido a Matrícula -->
-    <div class="mt-5 p-4 rounded-4 text-center" style="background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(6,182,212,0.12)); border: 2px solid rgba(34,197,94,0.35);">
+    <div class="mt-5 p-4 rounded-4 text-center reveal" style="background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(6,182,212,0.12)); border: 2px solid rgba(34,197,94,0.35);">
         <i class="bi bi-mortarboard fs-1 text-success mb-3 d-block"></i>
         <h4 class="fw-bold mb-2" style="color: var(--text-main);">¿Busca matricularse en el programa regular?</h4>
         <p class="text-muted mb-4">La matrícula regular (Primaria, Secundaria y Diversificado) es diferente a los cursos técnicos. Programe su cita de matrícula aquí.</p>
