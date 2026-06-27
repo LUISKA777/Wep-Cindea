@@ -1,0 +1,63 @@
+<svg viewBox="0 0 1600 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice" class="building-silhouette-svg">
+  <!-- Silueta estilizada del edificio del CINDEA, inspirada en la fachada real -->
+  <g fill="currentColor">
+    <!-- Ala izquierda con techo a dos aguas -->
+    <polygon points="40,230 230,160 420,230 420,250 40,250" />
+    <rect x="60" y="230" width="340" height="120" />
+
+    <!-- Cuerpo central con techo más alto -->
+    <polygon points="380,200 560,120 980,120 1160,200 1160,225 380,225" />
+    <rect x="430" y="200" width="700" height="150" />
+
+    <!-- Marquesina de la entrada -->
+    <polygon points="610,260 770,235 930,260 930,278 610,278" />
+    <rect x="690" y="278" width="160" height="72" />
+    <!-- Puerta -->
+    <rect x="735" y="300" width="70" height="50" fill="none" />
+
+    <!-- Ala derecha con techo a dos aguas -->
+    <polygon points="1120,230 1310,160 1500,230 1500,250 1120,250" />
+    <rect x="1140" y="230" width="340" height="120" />
+
+    <!-- Asta y bandera -->
+    <rect x="1180" y="130" width="5" height="160" />
+    <path d="M1185,135 q40,8 40,28 q-40,18 -40,8 Z" />
+
+    <!-- Muro perimetral -->
+    <rect x="10" y="350" width="1580" height="22" />
+
+    <!-- Verja -->
+    <g>
+      <rect x="20" y="300" width="6" height="50" />
+      <rect x="50" y="300" width="6" height="50" />
+      <rect x="80" y="300" width="6" height="50" />
+      <rect x="110" y="300" width="6" height="50" />
+      <rect x="140" y="300" width="6" height="50" />
+      <rect x="170" y="300" width="6" height="50" />
+      <rect x="200" y="300" width="6" height="50" />
+      <rect x="1230" y="300" width="6" height="50" />
+      <rect x="1260" y="300" width="6" height="50" />
+      <rect x="1290" y="300" width="6" height="50" />
+      <rect x="1320" y="300" width="6" height="50" />
+      <rect x="1350" y="300" width="6" height="50" />
+      <rect x="1380" y="300" width="6" height="50" />
+      <rect x="1410" y="300" width="6" height="50" />
+      <rect x="1440" y="300" width="6" height="50" />
+      <rect x="1470" y="300" width="6" height="50" />
+      <rect x="1500" y="300" width="6" height="50" />
+      <rect x="1530" y="300" width="6" height="50" />
+      <rect x="1560" y="300" width="6" height="50" />
+    </g>
+
+    <!-- Portón central -->
+    <rect x="600" y="290" width="8" height="62" />
+    <rect x="932" y="290" width="8" height="62" />
+    <rect x="615" y="320" width="6" height="32" />
+    <rect x="640" y="320" width="6" height="32" />
+    <rect x="665" y="320" width="6" height="32" />
+    <rect x="690" y="320" width="6" height="32" />
+    <rect x="850" y="320" width="6" height="32" />
+    <rect x="875" y="320" width="6" height="32" />
+    <rect x="900" y="320" width="6" height="32" />
+  </g>
+</svg>

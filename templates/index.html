@@ -2,7 +2,9 @@
 {% block title %}Inicio - Cindea de Venecia{% endblock %}
 
 {% block content %}
-<div class="row align-items-center mb-5 py-5">
+<div class="hero-row mb-5 py-5">
+    <div class="building-silhouette" aria-hidden="true"></div>
+    <div class="row align-items-center">
     <div class="col-lg-6 text-center text-lg-start reveal">
         <h1 class="display-3 fw-bold text-primary mb-3">Liderando el <span class="text-white">Futuro Educativo</span></h1>
         <p class="lead text-muted mb-4">En Cindea de Venecia, impulsamos tu crecimiento con educación accesible, moderna y de calidad. Únete a nuestra comunidad y transforma tu vida profesional.</p>
@@ -24,6 +26,7 @@
             <span class="shield-hero-ring"></span>
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Escudo Cindea de Venecia" class="shield-hero-img">
         </div>
+    </div>
     </div>
 </div>
 
