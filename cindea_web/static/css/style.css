@@ -44,6 +44,34 @@ body {
     border-bottom: 1px solid var(--glass-border);
 }
 
+/* Logo Glow Effects */
+.logo-glow {
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4),
+                0 0 30px rgba(6, 182, 212, 0.2),
+                0 0 45px rgba(6, 182, 212, 0.1);
+    border-radius: 50%;
+}
+
+.logo-glow:hover {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.6),
+                0 0 40px rgba(6, 182, 212, 0.4),
+                0 0 60px rgba(6, 182, 212, 0.2);
+    transform: scale(1.05);
+}
+
+.logo-tech-border {
+    border: 2px solid var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    transition: all 0.3s ease;
+}
+
+.logo-tech-border:hover {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.8),
+                0 0 25px rgba(6, 182, 212, 0.4);
+    transform: scale(1.03);
+}
+
 .navbar-brand {
     font-size: 1.5rem;
     letter-spacing: -0.5px;
