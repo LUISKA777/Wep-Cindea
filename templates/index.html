@@ -47,10 +47,7 @@
         <div class="shield-hero shield-hero-enter" style="max-width: 75%; margin: 0 auto;">
             <span class="shield-hero-halo"></span>
             <span class="shield-hero-ring"></span>
-            <span class="shield-hero-ring-dots">
-                <span></span><span></span><span></span>
-                <span></span><span></span><span></span>
-            </span>
+            <canvas class="shield-hero-canvas" id="orbitalCanvas"></canvas>
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Escudo Cindea de Venecia" class="shield-hero-img">
         </div>
     </div>
@@ -212,5 +209,84 @@
         </a>
     </div>
 </section>
+
+<script>
+(function() {
+    const canvas = document.getElementById('orbitalCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const particles = [
+        { orbit: 0.82, speed: 0.0007, angle: 0,       size: 6,  color: '#06b6d4', trail: 'rgba(6,182,212,' },
+        { orbit: 0.82, speed: 0.0007, angle: Math.PI,  size: 6,  color: '#06b6d4', trail: 'rgba(6,182,212,' },
+        { orbit: 0.92, speed: 0.0005, angle: Math.PI/3,size: 9,  color: '#f59e0b', trail: 'rgba(245,158,11,' },
+        { orbit: 0.92, speed: 0.0005, angle: Math.PI + Math.PI/3, size: 9, color: '#f59e0b', trail: 'rgba(245,158,11,' },
+        { orbit: 0.88, speed: -0.0009,angle: Math.PI/6,size: 5,  color: '#a78bfa', trail: 'rgba(167,139,250,' },
+        { orbit: 0.88, speed: -0.0009,angle: Math.PI + Math.PI/6, size: 5, color: '#a78bfa', trail: 'rgba(167,139,250,' },
+    ];
+
+    const trailLen = 38;
+    particles.forEach(p => { p.history = []; });
+
+    let lastTime = 0;
+    function draw(ts) {
+        const dt = ts - lastTime; lastTime = ts;
+        const W = canvas.width, H = canvas.height;
+        const cx = W / 2, cy = H / 2;
+
+        ctx.clearRect(0, 0, W, H);
+
+        const baseR = Math.min(W, H) / 2;
+
+        particles.forEach(p => {
+            p.angle += p.speed * dt;
+            const r = baseR * p.orbit;
+            const x = cx + r * Math.cos(p.angle);
+            const y = cy + r * Math.sin(p.angle);
+            p.history.push({ x, y });
+            if (p.history.length > trailLen) p.history.shift();
+
+            for (let i = 1; i < p.history.length; i++) {
+                const alpha = (i / p.history.length) * 0.55;
+                const w = p.size * (i / p.history.length) * 0.7;
+                ctx.beginPath();
+                ctx.moveTo(p.history[i-1].x, p.history[i-1].y);
+                ctx.lineTo(p.history[i].x, p.history[i].y);
+                ctx.strokeStyle = p.trail + alpha + ')';
+                ctx.lineWidth = w;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, p.size * 1.8);
+            grad.addColorStop(0, p.color);
+            grad.addColorStop(0.5, p.trail + '0.6)');
+            grad.addColorStop(1, p.trail + '0)');
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+        });
+
+        requestAnimationFrame(draw);
+    }
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width  = rect.width  || 400;
+        canvas.height = rect.height || 400;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    requestAnimationFrame(draw);
+})();
+</script>
 
 {% endblock %}
