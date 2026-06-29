@@ -103,21 +103,63 @@
     0%, 100% { transform: scale(1);    opacity: 0.8; }
     50%       { transform: scale(1.09); opacity: 1;   }
 }
-/* === Anillo decorativo del logo hero — diseño orbital dorado === */
-/* === Anillo héroe — canvas orbital === */
-.shield-hero-ring {
-    display: none;
-}
-.shield-hero-ring-dots {
-    display: none;
-}
-.shield-hero-canvas {
+/* === Anillo héroe — corona hexagonal de presentación === */
+.shield-hero-ring { display: none; }
+.shield-hero-ring-dots { display: none; }
+.shield-hero-canvas { display: none; }
+
+.shield-hero-crown {
     position: absolute;
-    inset: -18%;
-    width: 136%; height: 136%;
+    inset: -22%;
+    width: 144%; height: 144%;
     z-index: 0;
     pointer-events: none;
-    border-radius: 50%;
+    overflow: visible;
+}
+
+/* Hexágono exterior girando */
+.crown-hex-outer {
+    transform-origin: 50% 50%;
+    animation: hex-spin-slow 14s linear infinite;
+}
+/* Hexágono interior girando al revés */
+.crown-hex-inner {
+    transform-origin: 50% 50%;
+    animation: hex-spin-rev 9s linear infinite;
+}
+/* Destellos de las puntas */
+.crown-gem {
+    animation: gem-pulse 2.4s ease-in-out infinite;
+    transform-origin: 50% 50%;
+}
+.crown-gem:nth-child(odd) { animation-delay: -1.2s; }
+
+@keyframes hex-spin-slow { to { transform: rotate(360deg); } }
+@keyframes hex-spin-rev  { to { transform: rotate(-360deg); } }
+@keyframes gem-pulse {
+    0%,100% { opacity: 1;   transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.6); }
+}
+
+/* Arco de luz que barre */
+.crown-sweep {
+    transform-origin: 50% 50%;
+    animation: crown-sweep 4s linear infinite;
+}
+@keyframes crown-sweep { to { transform: rotate(360deg); } }
+
+/* Halo secundario de color */
+.crown-halo-2 {
+    animation: halo2-pulse 5s ease-in-out infinite;
+}
+@keyframes halo2-pulse {
+    0%,100% { opacity: 0.18; }
+    50%      { opacity: 0.42; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .crown-hex-outer, .crown-hex-inner,
+    .crown-gem, .crown-sweep, .crown-halo-2 { animation: none; }
 }
 .shield-hero-img {
     position: relative; width: 100%; z-index: 2;
