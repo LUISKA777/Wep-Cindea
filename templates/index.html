@@ -47,88 +47,7 @@
         <div class="shield-hero shield-hero-enter" style="max-width: 75%; margin: 0 auto;">
             <span class="shield-hero-halo"></span>
             <span class="shield-hero-ring"></span>
-
-            <!-- Corona hexagonal SVG -->
-            <svg class="shield-hero-crown" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <radialGradient id="halo2g" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%"   stop-color="#f59e0b" stop-opacity="0.35"/>
-                  <stop offset="55%"  stop-color="#a78bfa" stop-opacity="0.15"/>
-                  <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
-                </radialGradient>
-                <linearGradient id="sweepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%"   stop-color="#f59e0b" stop-opacity="0"/>
-                  <stop offset="60%"  stop-color="#fde68a" stop-opacity="0.7"/>
-                  <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
-                </linearGradient>
-                <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="3.5" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-                <filter id="gemglow" x="-80%" y="-80%" width="260%" height="260%">
-                  <feGaussianBlur stdDeviation="4" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-              </defs>
-
-              <!-- Halo de color pulsante -->
-              <circle class="crown-halo-2" cx="200" cy="200" r="168" fill="url(#halo2g)"/>
-
-              <!-- Barrer de luz (sweep) -->
-              <g class="crown-sweep">
-                <path d="M200,200 L200,42 A158,158 0 0,1 337,121 Z" fill="url(#sweepGrad)" opacity="0.28"/>
-              </g>
-
-              <!-- Hexágono exterior: línea punteada dorada -->
-              <g class="crown-hex-outer" filter="url(#glow)">
-                <polygon
-                  points="200,46 330,123 330,277 200,354 70,277 70,123"
-                  fill="none"
-                  stroke="#f59e0b"
-                  stroke-width="1.8"
-                  stroke-dasharray="12 7"
-                  opacity="0.75"/>
-                <!-- Vértices del hex exterior: gemas doradas -->
-                <circle class="crown-gem" cx="200" cy="46"  r="5.5" fill="#fde68a" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="330" cy="123" r="5.5" fill="#fde68a" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="330" cy="277" r="5.5" fill="#fde68a" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="200" cy="354" r="5.5" fill="#fde68a" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="70"  cy="277" r="5.5" fill="#fde68a" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="70"  cy="123" r="5.5" fill="#fde68a" filter="url(#gemglow)"/>
-              </g>
-
-              <!-- Hexágono interior: línea sólida cyan -->
-              <g class="crown-hex-inner" filter="url(#glow)">
-                <polygon
-                  points="200,80 298,135 298,245 200,300 102,245 102,135"
-                  fill="none"
-                  stroke="#06b6d4"
-                  stroke-width="1.2"
-                  stroke-dasharray="6 10"
-                  opacity="0.6"/>
-                <!-- Vértices hex interior: gemas cyan pequeñas -->
-                <circle class="crown-gem" cx="200" cy="80"  r="3.5" fill="#67e8f9" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="298" cy="135" r="3.5" fill="#67e8f9" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="298" cy="245" r="3.5" fill="#67e8f9" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="200" cy="300" r="3.5" fill="#67e8f9" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="102" cy="245" r="3.5" fill="#67e8f9" filter="url(#gemglow)"/>
-                <circle class="crown-gem" cx="102" cy="135" r="3.5" fill="#67e8f9" filter="url(#gemglow)"/>
-              </g>
-
-              <!-- Rayos desde el centro hacia las puntas del hex exterior -->
-              <g opacity="0.18" stroke="#a78bfa" stroke-width="1">
-                <line x1="200" y1="200" x2="200" y2="46"/>
-                <line x1="200" y1="200" x2="330" y2="123"/>
-                <line x1="200" y1="200" x2="330" y2="277"/>
-                <line x1="200" y1="200" x2="200" y2="354"/>
-                <line x1="200" y1="200" x2="70"  y2="277"/>
-                <line x1="200" y1="200" x2="70"  y2="123"/>
-              </g>
-
-              <!-- Anillo de referencia (sutil) -->
-              <circle cx="200" cy="200" r="155" fill="none" stroke="#a78bfa" stroke-width="0.7" opacity="0.22"/>
-            </svg>
-
+            <canvas class="shield-hero-canvas" id="orbitalCanvas"></canvas>
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Escudo Cindea de Venecia" class="shield-hero-img">
         </div>
     </div>
@@ -290,5 +209,84 @@
         </a>
     </div>
 </section>
+
+<script>
+(function() {
+    const canvas = document.getElementById('orbitalCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const particles = [
+        { orbit: 0.82, speed: 0.0007, angle: 0,       size: 6,  color: '#06b6d4', trail: 'rgba(6,182,212,' },
+        { orbit: 0.82, speed: 0.0007, angle: Math.PI,  size: 6,  color: '#06b6d4', trail: 'rgba(6,182,212,' },
+        { orbit: 0.92, speed: 0.0005, angle: Math.PI/3,size: 9,  color: '#f59e0b', trail: 'rgba(245,158,11,' },
+        { orbit: 0.92, speed: 0.0005, angle: Math.PI + Math.PI/3, size: 9, color: '#f59e0b', trail: 'rgba(245,158,11,' },
+        { orbit: 0.88, speed: -0.0009,angle: Math.PI/6,size: 5,  color: '#a78bfa', trail: 'rgba(167,139,250,' },
+        { orbit: 0.88, speed: -0.0009,angle: Math.PI + Math.PI/6, size: 5, color: '#a78bfa', trail: 'rgba(167,139,250,' },
+    ];
+
+    const trailLen = 38;
+    particles.forEach(p => { p.history = []; });
+
+    let lastTime = 0;
+    function draw(ts) {
+        const dt = ts - lastTime; lastTime = ts;
+        const W = canvas.width, H = canvas.height;
+        const cx = W / 2, cy = H / 2;
+
+        ctx.clearRect(0, 0, W, H);
+
+        const baseR = Math.min(W, H) / 2;
+
+        particles.forEach(p => {
+            p.angle += p.speed * dt;
+            const r = baseR * p.orbit;
+            const x = cx + r * Math.cos(p.angle);
+            const y = cy + r * Math.sin(p.angle);
+            p.history.push({ x, y });
+            if (p.history.length > trailLen) p.history.shift();
+
+            for (let i = 1; i < p.history.length; i++) {
+                const alpha = (i / p.history.length) * 0.55;
+                const w = p.size * (i / p.history.length) * 0.7;
+                ctx.beginPath();
+                ctx.moveTo(p.history[i-1].x, p.history[i-1].y);
+                ctx.lineTo(p.history[i].x, p.history[i].y);
+                ctx.strokeStyle = p.trail + alpha + ')';
+                ctx.lineWidth = w;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, p.size * 1.8);
+            grad.addColorStop(0, p.color);
+            grad.addColorStop(0.5, p.trail + '0.6)');
+            grad.addColorStop(1, p.trail + '0)');
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+        });
+
+        requestAnimationFrame(draw);
+    }
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width  = rect.width  || 400;
+        canvas.height = rect.height || 400;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    requestAnimationFrame(draw);
+})();
+</script>
 
 {% endblock %}
