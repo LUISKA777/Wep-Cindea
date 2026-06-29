@@ -650,6 +650,11 @@ def admin_dashboard():
 @login_required
 @admin_required
 def admin_courses_dashboard():
+    format_type = request.args.get('format')
+    if format_type == 'excel' and not (current_user.is_admin or current_user.is_superadmin):
+        flash('Acceso denegado. Se requieren privilegios de administrador o superadministrador para exportar a Excel.', 'danger')
+        return redirect(url_for('admin_courses_dashboard'))
+
     courses = sb_get('courses', 'select=*')
     if not isinstance(courses, list):
         courses = []
@@ -666,6 +671,61 @@ def admin_courses_dashboard():
             a['appointment_date'] = format_date_spanish(a['appointment_date'].split('T')[0])
         if 'created_at' in a:
             a['created_at'] = a['created_at'].split('T')[0] + ' ' + a['created_at'].split('T')[1][:5] if 'T' in a['created_at'] else a['created_at']
+
+    if format_type == 'excel':
+        try:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Cursos"
+            headers = [
+                'Curso', 'Descripción', 'Niveles Requeridos',
+                'Cupos Totales', 'Cupos Ocupados', 'Cupos Disponibles',
+                'Visible', 'Fecha Apertura', 'Fecha Cierre'
+            ]
+            ws.append(headers)
+            # style header
+            for cell in ws[1]:
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal='center')
+                cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
+            for c in courses:
+                row = [
+                    c.get('name', ''),
+                    c.get('description', ''),
+                    c.get('required_levels', ''),
+                    c.get('total_vacancies', ''),
+                    c.get('filled_vacancies', ''),
+                    c.get('vacancies_left', ''),
+                    'No' if c.get('hidden') else 'Sí',
+                    c.get('opening_date', '') or '',
+                    c.get('closing_date', '') or ''
+                ]
+                ws.append([str(v) if v is not None else '' for v in row])
+            # Adjust column widths
+            for col in ws.columns:
+                max_length = 0
+                column = col[0].column_letter
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = (max_length + 2)
+                ws.column_dimensions[column].width = adjusted_width
+            excel_file = BytesIO()
+            wb.save(excel_file)
+            excel_file.seek(0)
+            filename = f'cursos_{datetime.now().date().isoformat()}.xlsx'
+            return Response(
+                excel_file.read(),
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                headers={'Content-Disposition': f'attachment;filename={filename}'}
+            )
+        except Exception as e:
+            print(f"Error generating Excel (cursos): {e}")
+            flash('Error al generar el archivo Excel. Por favor, intente de nuevo.', 'danger')
+            return redirect(url_for('admin_courses_dashboard'))
 
     return render_template('admin_dash.html', courses=courses, appointments=appointments)
 
