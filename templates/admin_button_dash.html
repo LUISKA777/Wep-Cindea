@@ -51,6 +51,17 @@
         </div>
         {% endif %}
 
+        {% if current_user.is_superadmin %}
+        <div class="col">
+            <a href="{{ url_for('admin_secciones') }}" class="hub-card text-decoration-none">
+                <div class="hub-icon hub-icon-emerald"><i class="bi bi-diagram-3-fill"></i></div>
+                <h5 class="hub-card-title">Asignación de Secciones</h5>
+                <p class="hub-card-text">Cargar Excel y gestionar secciones por nivel</p>
+                <span class="hub-card-arrow"><i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+        {% endif %}
+
         <div class="col">
             <a href="{{ url_for('admin_posts') }}" class="hub-card text-decoration-none">
                 <div class="hub-icon hub-icon-pink"><i class="bi bi-chat-left-quote"></i></div>

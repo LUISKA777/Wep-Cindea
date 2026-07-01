@@ -10,8 +10,9 @@ from functools import wraps
 import csv
 import io
 from fpdf import FPDF, XPos, YPos
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Alignment, PatternFill
+import re
 
 
 def superadmin_required(f):
@@ -1549,6 +1550,336 @@ def matricula_receipt(apt_id):
     cycle = apt_details.get('cycle', 'primaria')
     info = MATRICULA_CYCLES.get(cycle, MATRICULA_CYCLES['primaria'])
     return render_template('matricula_receipt.html', appointment=apt_details, info=info)
+
+
+# ─── Section Assignments (secciones por nivel) ─────────────────────────────
+
+def _infer_level_from_section_name(name):
+    """Infers the level (primaria/segundo_nivel/tercer_nivel) from the leading
+    number in a section name like '7-A' or '10mo-B'. Returns None if the name
+    does not start with a number we recognize."""
+    if not name:
+        return None
+    m = re.match(r'\s*(\d+)', str(name))
+    if not m:
+        return None
+    n = int(m.group(1))
+    if 1 <= n <= 6:
+        return 'primaria'
+    if 7 <= n <= 9:
+        return 'segundo_nivel'
+    if n >= 10:
+        return 'tercer_nivel'
+    return None
+
+
+SECTION_LEVELS = {
+    'primaria':      '1er Nivel (Primaria)',
+    'segundo_nivel': '2do Nivel (7°-9°)',
+    'tercer_nivel':  '3er Nivel (10°-11°)',
+}
+
+
+@app.route('/secciones', methods=['GET'])
+def secciones_consulta():
+    """Public page where students look up their assigned section by cedula."""
+    cedula = request.args.get('cedula', '').strip()
+    result = None
+    not_found = False
+
+    if cedula:
+        rows = sb_get('section_assignments', f'student_cedula=eq.{cedula}&select=*,sections(id,name,level)')
+        if isinstance(rows, list) and len(rows) > 0:
+            row = rows[0]
+            section_info = row.get('sections') or {}
+            result = {
+                'student_name':     row.get('student_name', ''),
+                'student_cedula':   row.get('student_cedula', ''),
+                'section_name':     section_info.get('name', '— sin sección —'),
+                'level':            row.get('level', ''),
+                'level_label':      SECTION_LEVELS.get(row.get('level', ''), row.get('level', '')),
+                'updated_at':       row.get('updated_at', ''),
+            }
+            if result['updated_at'] and 'T' in result['updated_at']:
+                result['updated_at'] = result['updated_at'].split('T')[0] + ' ' + result['updated_at'].split('T')[1][:5]
+        else:
+            not_found = True
+
+    return render_template('secciones_consulta.html', cedula=cedula, result=result, not_found=not_found)
+
+
+@app.route('/admin/secciones', methods=['GET'])
+@login_required
+@superadmin_required
+def admin_secciones():
+    """Superadmin panel: list sections, list assignments, upload Excel."""
+    sections_raw = sb_get('sections', 'select=*&order=level,display_order,name')
+    if not isinstance(sections_raw, list):
+        sections_raw = []
+
+    assignments_raw = sb_get('section_assignments', 'select=*,sections(id,name,level)&order=level,student_name')
+    if not isinstance(assignments_raw, list):
+        assignments_raw = []
+
+    # Group sections by level for display
+    sections_by_level = {lvl: [] for lvl in SECTION_LEVELS.keys()}
+    for s in sections_raw:
+        lvl = s.get('level')
+        if lvl in sections_by_level:
+            sections_by_level[lvl].append(s)
+
+    # Annotate assignments with section name (denormalized) and format date
+    for a in assignments_raw:
+        sec = a.get('sections') or {}
+        a['section_name'] = sec.get('name', '— sin sección —')
+        if a.get('updated_at') and 'T' in a['updated_at']:
+            a['updated_at'] = a['updated_at'].split('T')[0] + ' ' + a['updated_at'].split('T')[1][:5]
+        a['level_label'] = SECTION_LEVELS.get(a.get('level', ''), a.get('level', ''))
+
+    return render_template(
+        'admin_secciones.html',
+        sections_by_level=sections_by_level,
+        assignments=assignments_raw,
+        total_sections=len(sections_raw),
+        total_assignments=len(assignments_raw),
+    )
+
+
+@app.route('/admin/secciones/sections/add', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_add_section():
+    """Create a new predefined section."""
+    level = request.form.get('level', '').strip()
+    name = request.form.get('name', '').strip()
+    display_order = request.form.get('display_order', '0').strip() or '0'
+
+    if level not in SECTION_LEVELS or not name:
+        flash('Debe seleccionar un nivel y un nombre para la sección.', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    # Reject duplicates explicitly so the admin gets a clear message
+    existing = sb_get('sections', f'level=eq.{level}&name=eq.{name}&select=id')
+    if isinstance(existing, list) and len(existing) > 0:
+        flash(f'Ya existe la sección "{name}" en {SECTION_LEVELS[level]}.', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    try:
+        display_order_int = int(display_order)
+    except ValueError:
+        display_order_int = 0
+
+    res = sb_post('sections', {
+        'level': level,
+        'name': name,
+        'display_order': display_order_int,
+    })
+    if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
+        flash(f'Sección "{name}" agregada a {SECTION_LEVELS[level]}.', 'success')
+    else:
+        flash(f'Error al agregar la sección: {res}', 'danger')
+    return redirect(url_for('admin_secciones'))
+
+
+@app.route('/admin/secciones/sections/delete/<int:section_id>', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_delete_section(section_id):
+    """Delete a section. Assignments that pointed to it keep the student record
+    but get section_id=NULL thanks to ON DELETE SET NULL."""
+    r = sb_delete('sections', 'id', section_id)
+    if hasattr(r, 'status_code') and r.status_code in [200, 204]:
+        flash('Sección eliminada. Los estudiantes asignados quedaron sin sección.', 'success')
+    else:
+        flash(f'Error al eliminar la sección: {r.status_code}', 'danger')
+    return redirect(url_for('admin_secciones'))
+
+
+@app.route('/admin/secciones/assignments/delete/<int:assignment_id>', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_delete_assignment(assignment_id):
+    """Delete a single assignment."""
+    r = sb_delete('section_assignments', 'id', assignment_id)
+    if hasattr(r, 'status_code') and r.status_code in [200, 204]:
+        flash('Asignación eliminada.', 'success')
+    else:
+        flash(f'Error al eliminar la asignación: {r.status_code}', 'danger')
+    return redirect(url_for('admin_secciones'))
+
+
+@app.route('/admin/secciones/upload', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_upload_secciones():
+    """Upload an Excel with columns (nombre, cedula, seccion) and upsert
+    section_assignments. Section names are matched case-insensitively against
+    the predefined sections table; the level is inferred from the leading
+    number of the section name.
+    """
+    file = request.files.get('file')
+    if not file or not file.filename:
+        flash('Por favor seleccione un archivo Excel.', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    filename = file.filename.lower()
+    if not (filename.endswith('.xlsx') or filename.endswith('.xls')):
+        flash('El archivo debe ser un Excel (.xlsx o .xls).', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    # Load all predefined sections into a lookup: name.lower() -> (id, level)
+    sections_raw = sb_get('sections', 'select=id,name,level')
+    if not isinstance(sections_raw, list) or not sections_raw:
+        flash('No hay secciones predefinidas. Cree al menos una sección antes de cargar el Excel.', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    section_lookup = {}
+    for s in sections_raw:
+        section_lookup[s['name'].strip().lower()] = (s['id'], s['level'])
+
+    try:
+        wb = load_workbook(file, data_only=True)
+        ws = wb.active
+    except Exception as e:
+        print(f"Error reading Excel: {e}")
+        flash('No se pudo leer el archivo Excel. Verifique que sea un archivo válido.', 'danger')
+        return redirect(url_for('admin_secciones'))
+
+    rows = list(ws.iter_rows(values_only=True))
+    if len(rows) < 2:
+        flash('El archivo Excel está vacío o solo tiene encabezados.', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    # Locate columns case-insensitively (tolerates 'Nombre', 'NOMBRE ', etc.)
+    def _norm(s):
+        return re.sub(r'\s+', ' ', str(s or '')).strip().lower()
+
+    header = [_norm(c) for c in rows[0]]
+    try:
+        idx_nombre = header.index('nombre')
+        idx_cedula = header.index('cedula') if 'cedula' in header else header.index('cédula')
+        idx_seccion = header.index('seccion') if 'seccion' in header else header.index('sección')
+    except ValueError:
+        flash('El Excel debe tener columnas "nombre", "cedula" y "seccion" en la primera fila.', 'danger')
+        return redirect(url_for('admin_secciones'))
+
+    inserted = 0
+    updated = 0
+    errors = []
+
+    for row_num, row in enumerate(rows[1:], start=2):
+        # Skip blank rows entirely
+        if row is None or all(c is None or str(c).strip() == '' for c in row):
+            continue
+
+        raw_nombre = row[idx_nombre] if idx_nombre < len(row) else None
+        raw_cedula = row[idx_cedula] if idx_cedula < len(row) else None
+        raw_seccion = row[idx_seccion] if idx_seccion < len(row) else None
+
+        # Keep cédula as text: openpyxl returns ints for numeric cells, which
+        # would strip leading zeros. Force to str and strip.
+        nombre = str(raw_nombre or '').strip()
+        cedula = str(raw_cedula if raw_cedula is not None else '').strip()
+        # If openpyxl gave us a float (e.g. 123456789.0), turn into clean int-string
+        if raw_cedula is not None and isinstance(raw_cedula, float) and raw_cedula.is_integer():
+            cedula = str(int(raw_cedula))
+        seccion = str(raw_seccion or '').strip()
+
+        if not nombre or not cedula or not seccion:
+            errors.append(f'Fila {row_num}: faltan datos (nombre, cédula o sección vacíos).')
+            continue
+
+        sec_key = seccion.lower()
+        if sec_key not in section_lookup:
+            errors.append(f'Fila {row_num}: la sección "{seccion}" no existe. Créela primero en el panel.')
+            continue
+
+        section_id, level = section_lookup[sec_key]
+
+        # Upsert by cedula: query first, then patch or post
+        existing = sb_get('section_assignments', f'student_cedula=eq.{cedula}&select=id')
+        if isinstance(existing, list) and len(existing) > 0:
+            r = sb_patch('section_assignments', 'id', existing[0]['id'], {
+                'student_name':   nombre,
+                'section_id':     section_id,
+                'level':          level,
+            })
+            if hasattr(r, 'status_code') and r.status_code in [200, 204]:
+                updated += 1
+            else:
+                errors.append(f'Fila {row_num}: error al actualizar cédula {cedula}.')
+        else:
+            r = sb_post('section_assignments', {
+                'student_cedula': cedula,
+                'student_name':   nombre,
+                'section_id':     section_id,
+                'level':          level,
+            })
+            if isinstance(r, list) or (isinstance(r, dict) and 'id' in r):
+                inserted += 1
+            else:
+                errors.append(f'Fila {row_num}: error al insertar cédula {cedula}.')
+
+    summary = f'Carga completada: {inserted} insertados, {updated} actualizados.'
+    if errors:
+        flash(summary, 'warning')
+        # Show first 20 errors to avoid flooding the flash queue
+        for e in errors[:20]:
+            flash(e, 'danger')
+        if len(errors) > 20:
+            flash(f'... y {len(errors) - 20} errores más (revise el archivo).', 'danger')
+    else:
+        flash(summary, 'success')
+    return redirect(url_for('admin_secciones'))
+
+
+@app.route('/admin/secciones/imprimir', methods=['GET'])
+@login_required
+@superadmin_required
+def admin_secciones_print():
+    """Printable, white-background view grouped by section."""
+    sections_raw = sb_get('sections', 'select=*&order=level,display_order,name')
+    if not isinstance(sections_raw, list):
+        sections_raw = []
+
+    assignments_raw = sb_get('section_assignments', 'select=*,sections(id,name,level)&order=level,sections(name),student_name')
+    if not isinstance(assignments_raw, list):
+        assignments_raw = []
+
+    # Build a per-section list: section_id -> list of assignments
+    by_section = {}
+    for s in sections_raw:
+        by_section[s['id']] = {
+            'id':    s['id'],
+            'name':  s['name'],
+            'level': s.get('level', ''),
+            'students': [],
+        }
+    for a in assignments_raw:
+        sec = a.get('sections') or {}
+        sec_id = sec.get('id')
+        if sec_id in by_section:
+            by_section[sec_id]['students'].append({
+                'cedula': a.get('student_cedula', ''),
+                'name':   a.get('student_name', ''),
+            })
+
+    # Group by level, in declaration order
+    grouped_by_level = {lvl: [] for lvl in SECTION_LEVELS.keys()}
+    for s in sections_raw:
+        if s.get('level') in grouped_by_level:
+            grouped_by_level[s.get('level')].append(by_section[s['id']])
+
+    total_students = sum(len(s['students']) for s in by_section.values())
+    generated_at = datetime.now(CR_TZ).strftime('%d/%m/%Y %H:%M')
+
+    return render_template(
+        'admin_secciones_print.html',
+        grouped_by_level=grouped_by_level,
+        section_level_labels=SECTION_LEVELS,
+        total_students=total_students,
+        generated_at=generated_at,
+    )
 
 
 # ─── Horarios Rutas ────────────────────────────────────────────────────────

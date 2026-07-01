@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Asignación de Secciones - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm" title="Volver al panel">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold text-primary mb-0">
+            <i class="bi bi-diagram-3-fill me-2"></i>Asignación de Secciones
+        </h2>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('admin_secciones_print') }}" target="_blank" class="btn btn-outline-primary">
+            <i class="bi bi-printer me-1"></i>Imprimir lista
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm border-start border-primary border-4">
+            <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semibold">Secciones creadas</div>
+                <div class="display-6 fw-bold text-primary">{{ total_sections }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm border-start border-success border-4">
+            <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semibold">Estudiantes asignados</div>
+                <div class="display-6 fw-bold text-success">{{ total_assignments }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm border-start border-info border-4">
+            <div class="card-body py-3">
+                <div class="text-muted small text-uppercase fw-semcase">Niveles activos</div>
+                <div class="display-6 fw-bold text-info">
+                    {% set ns = namespace(count=0) %}
+                    {% for lvl, lst in sections_by_level.items() %}{% if lst %}{% set ns.count = ns.count + 1 %}{% endif %}{% endfor %}
+                    {{ ns.count }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Carga de Excel ───────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold py-3">
+        <i class="bi bi-cloud-upload me-2"></i>Cargar estudiantes desde Excel
+    </div>
+    <div class="card-body p-4">
+        <form method="post" action="{{ url_for('admin_upload_secciones') }}" enctype="multipart/form-data" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label for="file" class="form-label fw-semibold">Archivo Excel (.xlsx)</label>
+                <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+                <div class="form-text">
+                    El archivo debe tener 3 columnas en la primera fila:
+                    <code>nombre</code>, <code>cedula</code>, <code>seccion</code>.
+                    Las cédulas se guardan como texto (los ceros a la izquierda se conservan).
+                </div>
+            </div>
+            <div class="col-md-4 d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-upload me-1"></i>Procesar Excel
+                </button>
+            </div>
+        </form>
+        <div class="alert alert-light border mt-3 mb-0 small">
+            <i class="bi bi-lightbulb me-1 text-warning"></i>
+            <strong>Tip:</strong> si sube el mismo Excel varias veces, las cédulas existentes
+            se actualizan con la nueva sección (no se duplican). Puede corregir errores
+            subiendo un Excel nuevo con los datos corregidos.
+        </div>
+    </div>
+</div>
+
+<!-- ─── Secciones predefinidas ──────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-light fw-bold py-3 d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-bookmarks me-2 text-primary"></i>Secciones predefinidas por nivel</span>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddSection">
+            <i class="bi bi-plus-circle me-1"></i>Agregar sección
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="row g-0">
+            {% for level, label in [('primaria', '1er Nivel (Primaria)'), ('segundo_nivel', '2do Nivel (7°-9°)'), ('tercer_nivel', '3er Nivel (10°-11°)')] %}
+            <div class="col-md-4 border-end">
+                <div class="p-3">
+                    <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                        {{ label }}
+                        <span class="badge bg-secondary ms-1">{{ sections_by_level[level]|length }}</span>
+                    </h6>
+                    {% if sections_by_level[level] %}
+                        <ul class="list-group list-group-flush">
+                            {% for s in sections_by_level[level] %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0">
+                                <span class="fw-semibold">
+                                    <i class="bi bi-bookmark-fill text-primary me-2"></i>{{ s.name }}
+                                </span>
+                                <form method="post" action="{{ url_for('admin_delete_section', section_id=s.id) }}" class="d-inline"
+                                      onsubmit="return confirm('¿Eliminar la sección {{ s.name }}? Los estudiantes asignados quedarán sin sección.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted small fst-italic mb-0">Sin secciones todavía.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ─── Asignaciones actuales ──────────────────────────────── -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-light fw-bold py-3">
+        <i class="bi bi-people me-2 text-primary"></i>Estudiantes asignados
+        <span class="badge bg-secondary ms-2">{{ total_assignments }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead>
+                    <tr class="table-light">
+                        <th class="ps-4">Estudiante</th>
+                        <th>Cédula</th>
+                        <th class="text-center">Nivel</th>
+                        <th class="text-center">Sección</th>
+                        <th class="text-center">Actualizado</th>
+                        <th class="text-end pe-4">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in assignments %}
+                    <tr>
+                        <td class="ps-4 fw-semibold">{{ a.student_name }}</td>
+                        <td>{{ a.student_cedula }}</td>
+                        <td class="text-center">
+                            {% if a.level == 'primaria' %}
+                                <span class="badge bg-warning text-dark">1er Nivel</span>
+                            {% elif a.level == 'segundo_nivel' %}
+                                <span class="badge bg-info text-dark">2do Nivel</span>
+                            {% elif a.level == 'tercer_nivel' %}
+                                <span class="badge bg-success">3er Nivel</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ a.level }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ a.section_name }}</span>
+                        </td>
+                        <td class="text-center text-muted small">{{ a.updated_at or '—' }}</td>
+                        <td class="text-end pe-4">
+                            <form method="post" action="{{ url_for('admin_delete_assignment', assignment_id=a.id) }}" class="d-inline"
+                                  onsubmit="return confirm('¿Eliminar la asignación de {{ a.student_name }}?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not assignments %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox display-6 d-block mb-2 opacity-50"></i>
+                            No hay estudiantes asignados todavía. Cree secciones y suba un Excel.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Modal: agregar sección ────────────────────────────── -->
+<div class="modal fade" id="modalAddSection" tabindex="-1" aria-labelledby="modalAddSectionLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="{{ url_for('admin_add_section') }}" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAddSectionLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar nueva sección
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="level" class="form-label fw-semibold">Nivel</label>
+                    <select class="form-select" id="level" name="level" required>
+                        <option value="">— Seleccione un nivel —</option>
+                        <option value="primaria">1er Nivel (Primaria)</option>
+                        <option value="segundo_nivel">2do Nivel (7°-9°)</option>
+                        <option value="tercer_nivel">3er Nivel (10°-11°)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="name" class="form-label fw-semibold">Nombre de la sección</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Ej. 7-A, 8-B, 10-A" required maxlength="50">
+                    <div class="form-text">Use un nombre corto y claro. Aparecerá tal cual en la consulta pública.</div>
+                </div>
+                <div class="mb-0">
+                    <label for="display_order" class="form-label fw-semibold">Orden de aparición (opcional)</label>
+                    <input type="number" class="form-control" id="display_order" name="display_order" value="0" min="0">
+                    <div class="form-text">Menor número aparece primero al imprimir. Por defecto: 0.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2 me-1"></i>Guardar sección
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

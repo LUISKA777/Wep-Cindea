@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Listado de Secciones - CINDEA Venecia</title>
+    <style>
+        /* ─── Base: blanco y negro, ideal para imprimir ─── */
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            color: #111;
+            background: #fff;
+            margin: 0;
+            padding: 1.5cm 1cm;
+            font-size: 12pt;
+            line-height: 1.4;
+        }
+        h1 {
+            text-align: center;
+            font-size: 18pt;
+            margin: 0 0 4pt 0;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 0.5pt;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 10pt;
+            color: #444;
+            margin: 0 0 18pt 0;
+        }
+        h2 {
+            font-size: 13pt;
+            margin: 22pt 0 6pt 0;
+            padding: 4pt 8pt;
+            background: #111;
+            color: #fff;
+            border-radius: 3pt;
+            display: inline-block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14pt;
+        }
+        th, td {
+            border: 1pt solid #333;
+            padding: 5pt 8pt;
+            text-align: left;
+            font-size: 11pt;
+        }
+        th {
+            background: #e8e8e8;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 10pt;
+            letter-spacing: 0.3pt;
+        }
+        td.num { width: 36pt; text-align: center; font-weight: 600; }
+        td.cedula { width: 110pt; }
+        td.count { width: 80pt; text-align: center; font-weight: 600; }
+        .empty {
+            font-style: italic;
+            color: #888;
+            font-size: 10pt;
+            margin: 0 0 12pt 8pt;
+        }
+        .footer {
+            margin-top: 28pt;
+            padding-top: 8pt;
+            border-top: 1pt solid #999;
+            font-size: 9pt;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+        .toolbar {
+            position: fixed;
+            top: 12pt;
+            right: 12pt;
+            display: flex;
+            gap: 8pt;
+        }
+        .toolbar button {
+            background: #0d6efd;
+            color: #fff;
+            border: 0;
+            padding: 6pt 14pt;
+            border-radius: 4pt;
+            cursor: pointer;
+            font-size: 11pt;
+            font-weight: 600;
+            box-shadow: 0 1pt 3pt rgba(0,0,0,0.2);
+        }
+        .toolbar button.secondary { background: #6c757d; }
+        .toolbar button:hover { filter: brightness(1.1); }
+        /* ─── Print rules ─── */
+        @media print {
+            body { padding: 0.5cm; }
+            .toolbar { display: none !important; }
+            h2 { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th { background: #e8e8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 1cm; size: letter; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="window.print()">🖨 Imprimir</button>
+        <button class="secondary" onclick="window.close()">Cerrar</button>
+    </div>
+
+    <h1>CINDEA Venecia — Listado de Secciones</h1>
+    <p class="subtitle">Asignación de estudiantes por sección — generado el {{ generated_at }}</p>
+
+    {% for level, label in [('primaria', '1er Nivel (Primaria)'),
+                             ('segundo_nivel', '2do Nivel (7°-9°)'),
+                             ('tercer_nivel', '3er Nivel (10°-11°)')] %}
+        {% set level_sections = grouped_by_level[level] %}
+        <h2>{{ label }} — {{ level_sections|length }} sección(es)</h2>
+        {% if level_sections %}
+            {% for section in level_sections %}
+                <h3 style="font-size:11pt; margin:10pt 0 4pt 0;">
+                    Sección <strong>{{ section.name }}</strong>
+                    <span style="font-weight:400; color:#555;">— {{ section.students|length }} estudiante(s)</span>
+                </h3>
+                {% if section.students %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="num">#</th>
+                            <th class="cedula">Cédula</th>
+                            <th>Nombre del Estudiante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stu in section.students %}
+                        <tr>
+                            <td class="num">{{ loop.index }}</td>
+                            <td class="cedula">{{ stu.cedula }}</td>
+                            <td>{{ stu.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="empty">(Sin estudiantes asignados a esta sección)</p>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <p class="empty">(No hay secciones creadas en este nivel)</p>
+        {% endif %}
+    {% endfor %}
+
+    <div class="footer">
+        <span><strong>Total de estudiantes asignados:</strong> {{ total_students }}</span>
+        <span>CINDEA Venecia — Sistema de Gestión Académica</span>
+    </div>
+</body>
+</html>

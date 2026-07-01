@@ -48,6 +48,11 @@
                             <i class="bi bi-clock-history"></i><span>Horarios</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.path.startswith('/secciones') else '' }}" href="{{ url_for('secciones_consulta') }}">
+                            <i class="bi bi-diagram-3-fill"></i><span>Consultar Sección</span>
+                        </a>
+                    </li>
                     {% if current_user.is_authenticated %}
                       {% if current_user.is_admin or current_user.is_superadmin %}
                         <li class="nav-item">

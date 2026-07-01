@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Consultar Sección - CINDEA Venecia{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-7">
+        <div class="text-center mb-4">
+            <span class="admin-hub-eyebrow"><i class="bi bi-diagram-3-fill me-2"></i>Asignación de Secciones</span>
+            <h1 class="admin-hub-title mt-2">¿Cuál es mi sección?</h1>
+            <p class="admin-hub-subtitle">Ingrese su número de cédula para consultar la sección que le fue asignada.</p>
+        </div>
+
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4 p-md-5">
+                <form method="get" action="{{ url_for('secciones_consulta') }}" class="mb-0">
+                    <label for="cedula" class="form-label fw-semibold">Número de cédula</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text"><i class="bi bi-credit-card-2-front"></i></span>
+                        <input type="text"
+                               id="cedula"
+                               name="cedula"
+                               class="form-control"
+                               placeholder="Ej. 1-2345-6789"
+                               value="{{ cedula or '' }}"
+                               autocomplete="off"
+                               required
+                               autofocus>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-search me-1"></i>Consultar
+                        </button>
+                    </div>
+                    <div class="form-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        No use puntos ni comas. Escriba la cédula tal como aparece en su documento de identidad.
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if result %}
+        <div class="card border-0 shadow-lg mt-4 border-start border-success border-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-success-subtle text-success fs-6 me-2">
+                        <i class="bi bi-check-circle-fill me-1"></i>Asignación encontrada
+                    </span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold">Estudiante</div>
+                        <div class="fs-5 fw-bold">{{ result.student_name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold">Cédula</div>
+                        <div class="fs-5 fw-bold">{{ result.student_cedula }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold">Nivel</div>
+                        <div class="fs-5">
+                            <span class="badge bg-info-subtle text-info border border-info-subtle fs-6">
+                                {{ result.level_label }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small text-uppercase fw-semibold">Sección asignada</div>
+                        <div class="fs-4 fw-bold text-primary">
+                            <i class="bi bi-bookmark-star-fill me-2"></i>{{ result.section_name }}
+                        </div>
+                    </div>
+                    {% if result.updated_at %}
+                    <div class="col-12">
+                        <div class="text-muted small">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Última actualización: {{ result.updated_at }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="alert alert-info border-0 mt-4 mb-0 d-flex align-items-start">
+                    <i class="bi bi-printer-fill me-2 mt-1"></i>
+                    <div>
+                        <strong>¿Necesita un comprobante?</strong> Tome una captura de pantalla de esta pantalla o
+                        anote su sección antes de presentarse en la institución.
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% elif not_found %}
+        <div class="card border-0 shadow-lg mt-4 border-start border-warning border-4">
+            <div class="card-body p-4 p-md-5 text-center">
+                <i class="bi bi-exclamation-triangle-fill text-warning display-4 mb-3"></i>
+                <h4 class="fw-bold">Aún no tiene sección asignada</h4>
+                <p class="text-muted mb-0">
+                    La cédula <strong>{{ cedula }}</strong> no figura en el sistema todavía.
+                    <br>
+                    Por favor, contacte a la administración del CINDEA para más información.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
