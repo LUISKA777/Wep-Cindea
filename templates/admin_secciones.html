@@ -207,9 +207,12 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="name" class="form-label fw-semibold">Nombre de la sección</label>
-                    <input type="text" class="form-control" id="name" name="name" placeholder="Ej. 7-A, 8-B, 10-A" required maxlength="50">
-                    <div class="form-text">Use un nombre corto y claro. Aparecerá tal cual en la consulta pública.</div>
+                    <label for="name" class="form-label fw-semibold">Nombre(s) de la sección</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Ej. 7-A, 7-B, 8-A" required>
+                    <div class="form-text">
+                        Puede escribir <strong>una o varias</strong> separadas por coma (<code>,</code>), punto y coma (<code>;</code>) o saltos de línea.
+                        Se crearán todas a la vez en el nivel seleccionado.
+                    </div>
                 </div>
                 <div class="mb-0">
                     <label for="display_order" class="form-label fw-semibold">Orden de aparición (opcional)</label>

@@ -1649,35 +1649,66 @@ def admin_secciones():
 @login_required
 @superadmin_required
 def admin_add_section():
-    """Create a new predefined section."""
+    """Create a new predefined section. Accepts a comma-separated list in
+    `name` to bulk-create several sections at once for the same level.
+    Duplicates are silently skipped (per-row)."""
     level = request.form.get('level', '').strip()
-    name = request.form.get('name', '').strip()
-    display_order = request.form.get('display_order', '0').strip() or '0'
+    raw_name = request.form.get('name', '').strip()
+    display_order_raw = request.form.get('display_order', '0').strip() or '0'
 
-    if level not in SECTION_LEVELS or not name:
+    if level not in SECTION_LEVELS or not raw_name:
         flash('Debe seleccionar un nivel y un nombre para la sección.', 'warning')
         return redirect(url_for('admin_secciones'))
 
-    # Reject duplicates explicitly so the admin gets a clear message
-    existing = sb_get('sections', f'level=eq.{level}&name=eq.{name}&select=id')
-    if isinstance(existing, list) and len(existing) > 0:
-        flash(f'Ya existe la sección "{name}" en {SECTION_LEVELS[level]}.', 'warning')
-        return redirect(url_for('admin_secciones'))
-
     try:
-        display_order_int = int(display_order)
+        display_order_int = int(display_order_raw)
     except ValueError:
         display_order_int = 0
 
-    res = sb_post('sections', {
-        'level': level,
-        'name': name,
-        'display_order': display_order_int,
-    })
-    if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
-        flash(f'Sección "{name}" agregada a {SECTION_LEVELS[level]}.', 'success')
+    # Split on commas, newlines or semicolons; trim each piece
+    names = [n.strip() for n in re.split(r'[,;\n\r]+', raw_name) if n.strip()]
+
+    if not names:
+        flash('Debe indicar al menos un nombre de sección.', 'warning')
+        return redirect(url_for('admin_secciones'))
+
+    created = 0
+    skipped = []
+    failed = []
+    for idx, name in enumerate(names):
+        # Pre-check for duplicate in DB to give a clear message
+        existing = sb_get('sections', f'level=eq.{level}&name=eq.{name}&select=id')
+        if isinstance(existing, list) and len(existing) > 0:
+            skipped.append(name)
+            continue
+
+        res = sb_post('sections', {
+            'level': level,
+            'name': name,
+            'display_order': display_order_int + idx,
+        })
+        if isinstance(res, list) or (isinstance(res, dict) and 'id' in res):
+            created += 1
+        else:
+            failed.append(name)
+
+    msgs = []
+    if created:
+        msgs.append(f'{created} sección(es) creada(s) en {SECTION_LEVELS[level]}.')
+    if skipped:
+        preview = ', '.join(skipped[:5]) + ('...' if len(skipped) > 5 else '')
+        msgs.append(f'{len(skipped)} ya existían ({preview}).')
+    if failed:
+        msgs.append(f'{len(failed)} fallaron al guardar.')
+
+    if created and not failed:
+        flash(' '.join(msgs), 'success')
+    elif created and failed:
+        flash(' '.join(msgs), 'warning')
+    elif not created and skipped:
+        flash(' '.join(msgs), 'info')
     else:
-        flash(f'Error al agregar la sección: {res}', 'danger')
+        flash(' '.join(msgs) or 'No se pudo crear ninguna sección.', 'danger')
     return redirect(url_for('admin_secciones'))
 
 
