@@ -1583,12 +1583,59 @@ SECTION_LEVELS = {
 @app.route('/secciones', methods=['GET'])
 def secciones_consulta():
     """Public page where students look up their assigned section by cedula."""
-    cedula = request.args.get('cedula', '').strip()
+    cedula_input = request.args.get('cedula', '').strip()
     result = None
     not_found = False
 
-    if cedula:
-        rows = sb_get('section_assignments', f'student_cedula=eq.{cedula}&select=*,sections(id,name,level)')
+    if cedula_input:
+        # Try multiple variations of the cedula to account for formatting differences
+        def normalize_cedula(s):
+            """Return digits only from the string."""
+            return ''.join(c for c in s if c.isdigit())
+
+        # Variations to try:
+        # 1. Original input (trimmed)
+        # 2. Input with only digits (no hyphens, no spaces)
+        # 3. If 9 digits, formatted as X-XXXX-XXXX
+        variations = []
+
+        # Add original
+        variations.append(cedula_input)
+
+        # Add digits-only version
+        digits_only = normalize_cedula(cedula_input)
+        if digits_only and digits_only not in variations:
+            variations.append(digits_only)
+
+        # Add formatted version if 9 digits
+        if len(digits_only) == 9:
+            formatted = f"{digits_only[0]}-{digits_only[1:5]}-{digits_only[5:9]}"
+            if formatted not in variations:
+                variations.append(formatted)
+
+        # Also try with hyphens removed from original (in case it had some)
+        no_hyphens = cedula_input.replace('-', '')
+        if no_hyphens not in variations:
+            variations.append(no_hyphens)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_variations = []
+        for v in variations:
+            if v not in seen:
+                seen.add(v)
+                unique_variations.append(v)
+
+        # Try each variation until we find a match
+        rows = None
+        for cedula_variant in unique_variations:
+            if not cedula_variant:  # Skip empty
+                continue
+            rows = sb_get('section_assignments', f'student_cedula=eq.{cedula_variant}&select=*,sections(id,name,level)')
+            if isinstance(rows, list) and len(rows) > 0:
+                break
+
+        # If we found results, process them
         if isinstance(rows, list) and len(rows) > 0:
             row = rows[0]
             section_info = row.get('sections') or {}
@@ -1605,7 +1652,7 @@ def secciones_consulta():
         else:
             not_found = True
 
-    return render_template('secciones_consulta.html', cedula=cedula, result=result, not_found=not_found)
+    return render_template('secciones_consulta.html', cedula=cedula_input, result=result, not_found=not_found)
 
 
 @app.route('/admin/secciones', methods=['GET'])
